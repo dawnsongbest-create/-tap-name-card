@@ -4,7 +4,7 @@
 >
 > 日期：2026-07-25
 >
-> 结论：`CONDITIONAL_PASS`
+> 结论：`PASS`
 
 ## 1. 审查范围
 
@@ -66,7 +66,7 @@ PowerShell 的 `npm.ps1` 受本机执行策略限制，因此使用同一 npm �
 
 - 风险：源码全部为 `.ts`，缺少明确编译插件配置可能导致微信开发者工具无法按预期编译。
 - 修复：在 `project.config.json` 中加入原生 `typescript` 编译插件设置，并同步 `ARCHITECTURE.md` 与 `DECISIONS.md`。
-- 验证：JSON 格式、Lint、TypeScript 和测试通过；开发者工具识别仍需人工验证。
+- 验证：JSON 格式、Lint、TypeScript 和测试通过；微信开发者工具人工复验已确认 TypeScript、WXML、WXSS 编译成功。
 
 ### 中：日志脱敏未覆盖常见密钥和 CloudBase 环境字段
 
@@ -115,7 +115,7 @@ PowerShell 的 `npm.ps1` 受本机执行策略限制，因此使用同一 npm �
 
 ## 6. 安全检查
 
-- `project.private.config.json` 已被 `.gitignore` 命中，当前不存在且未被 Git 跟踪。
+- `project.private.config.json` 已被 `.gitignore` 命中，人工复验确认未进入 Git 提交。
 - 仓库中的 AppID 为公开导入基线 `touristappid`，没有真实 AppID。
 - 没有 AppSecret、AI Key、私钥、真实 CloudBase 环境 ID、OpenID 或真实联系方式。
 - 搜索命中的手机号、Token、OpenID、密钥和环境 ID 均为自动测试假值，用于验证脱敏行为。
@@ -137,31 +137,33 @@ PowerShell 的 `npm.ps1` 受本机执行策略限制，因此使用同一 npm �
 - README 的目录、安装、配置、导入和未实现范围与当前仓库一致。
 - `ARCHITECTURE.md` 已记录实际目录、工具版本和 TypeScript 编译配置。
 - `DECISIONS.md` 已记录 ESLint、Prettier、Vitest、原生工程结构和 CloudBase 边界。
-- `TASKS.md` 保持 M1-01 为 `IN_REVIEW`，M1-02 及以后为 `NOT_STARTED`，没有虚报业务完成。
-- 微信项目配置仍以 `NEEDS_VALIDATION` 记录。
+- `TASKS.md` 在人工复验通过后将 M1-01 更新为 `DONE`，M1-02 及以后保持 `NOT_STARTED`，没有虚报业务完成。
+- 微信开发者工具导入、目录识别、编译和工程初始化页已完成人工复验。
 
-## 9. 未解决问题与人工验证
+## 9. 微信开发者工具人工复验记录
 
-首次人工验收已经证明项目可被开发者工具打开，但编译因跨根依赖失败；该问题已在代码中修正。当前执行环境没有微信开发者工具，微信官方文档页面也无法打开，因此没有声称修正后已成功编译。以下项目仍需人工复验：
+2026-07-25 完成修正后的微信开发者工具人工复验，结果如下：
 
-1. 在安装了当前微信开发者工具的 Windows 电脑上克隆仓库。
-2. 使用 Node.js 24.14.0 和 npm 11.x 执行 `npm.cmd ci`。
-3. 复制 `project.private.config.json.example` 为 `project.private.config.json`。
-4. 以仓库根目录导入项目；无正式 AppID 时先使用公开 `touristappid` 做基础导入，需要真实平台能力时在开发者工具中选择自己的 AppID。
-5. 确认 `miniprogramRoot` 为 `miniprogram/`、`cloudfunctionRoot` 为 `cloudfunctions/`，并确认 `typescript` 编译插件被识别。
-6. 清除开发者工具缓存并重新编译，确认不再出现跨目录模块解析错误。
-7. 确认 `pages/foundation/index` 已注册，“工程初始化页”无编译错误，Loading、Empty、Error、Retry 均可显示，Retry 计数可增加。
-8. 检查开发者工具控制台没有敏感信息或未处理异常。
-9. 执行四项质量命令，并确认 `project.private.config.json` 未出现在 Git 状态中。
+- 成功导入仓库根目录。
+- `miniprogram/` 和 `cloudfunctions/` 目录识别正确。
+- TypeScript、WXML、WXSS 编译成功。
+- `shared` 模块解析错误已经消失。
+- `pages/foundation/index` 已成功注册。
+- 工程初始化页正常显示。
+- Loading、Empty、Error、Retry 四种状态正常显示。
+- 点击 Retry 后，重试触发次数正常增加。
+- Console 没有红色代码错误，只有微信基础库/API 提示。
+- 未配置 CloudBase 时工程没有崩溃。
+- `project.private.config.json` 未进入 Git 提交。
 
-上述人工导入和编译是进入 M1.2 前的剩余条件。目前没有已知代码级阻断，但在人工条件完成前不建议进入 M1.2。
+M1.1 的微信开发者工具人工验收项已全部通过，没有剩余 M1.1 阻断问题。
 
 ## 10. 结论
 
-M1.1 的工程结构、依赖安装、格式、Lint、类型、自动测试、安全边界、范围边界和文档一致性均通过；首次人工验收发现的跨根依赖与连带页面未注册问题已修正，但微信开发者工具中的修正后编译尚未复验。
+M1.1 的工程结构、依赖安装、格式、Lint、类型、自动测试、安全边界、范围边界和文档一致性均通过；首次人工验收发现的跨根依赖与连带页面未注册问题已经修正，并通过微信开发者工具人工复验。
 
-最终结论：`CONDITIONAL_PASS`。
+最终结论：`PASS`。
 
-进入 M1.2 建议：暂不进入。待人工完成微信开发者工具导入、TypeScript 编译和工程初始化页验证并明确确认后，再单独开始 M1.2。
+M1.1 门禁已满足。本文档更新不代表已经开始 M1.2；M1.2 必须由独立任务明确授权后才能执行。
 
 > 本轮仅审查并修正 M1.1，未实现 M1.2 或任何名牌、社交、AI、NFC 业务。

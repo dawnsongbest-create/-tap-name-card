@@ -1,10 +1,10 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.1 v1.0｜日期：2026-07-24｜状态：`IN_REVIEW`
+> 版本：M1.1 v1.1｜日期：2026-07-25｜状态：`DONE`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01 已完成本地工程检查并进入人工验收，状态为 `IN_REVIEW`；M1-02 及以后均未开始。
+> 当前规则：M0 已人工通过；M1-01 已完成本地检查和微信开发者工具人工复验，状态为 `DONE`；M1-02 及以后均未开始。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -49,9 +49,9 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 - 元数据：M1｜M1.1｜P0｜依赖 M0 人工通过。
 - 范围：原生 TS 小程序、目录、包管理、格式/类型/测试、example 配置、README；不做业务/AI/NFC/真实审核。
 - 目录：根配置、`miniprogram/`、根 `shared/` 唯一源、`miniprogram/shared/` 运行时镜像、`tools/`、`cloudfunctions/README.md`、`tests/`；集合/函数/页面：无业务实现，只有工程初始化页。
-- 验收：本地格式、Lint、类型与 21 个单元测试通过；锁文件存在；无密钥；人工首次导入发现的跨根依赖和页面未注册问题已修正，等待开发者工具复验。
-- 测试：`shared:check`、小程序导入边界、页面注册文件、`format:check`、`lint`、`typecheck`、`vitest run` 已通过；微信开发者工具复验与真机空壳冒烟未执行。
-- 风险：当前执行环境未检测到微信开发者工具；必须人工确认修正后可编译并显示 foundation 页面。状态：`IN_REVIEW`。
+- 验收：本地格式、Lint、类型与 21 个单元测试通过；锁文件存在；无密钥；跨根依赖和页面未注册问题已修正；微信开发者工具复验通过。
+- 测试：`shared:check`、小程序导入边界、页面注册文件、`format:check`、`lint`、`typecheck`、`vitest run` 已通过；开发者工具成功编译并显示 foundation 页面，四种基础状态和 Retry 交互正常。
+- 风险：未配置真实 CloudBase，属于 M1.2 独立接入范围，不影响 M1.1 工程初始化验收。状态：`DONE`。
 
 ### M1-02 云环境与身份
 
