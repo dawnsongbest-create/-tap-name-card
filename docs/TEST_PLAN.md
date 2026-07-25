@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -145,16 +145,29 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 - 接受联系方式失败：状态和双方选择同时生效或都不生效。
 - 拉黑/注销部分清理失败：block/DELETED 策略先阻止敏感读，后台可幂等续跑。
 
-### 7.4 M1.2-A 本地与 M1.2-B 云端边界
+### 7.4 M1.2-A 领域层、M1.2-B 本地接入与云端边界
 
 M1.2-A 已可由 Node/Vitest 验证：输入白名单、HMAC 算法与环境隔离、响应字段投影、
 CurrentUserView 状态限制、内存原子事务、50 路并发、三次冲突退避、政策原子/幂等、
 RESTRICTED/DELETED/缺失/一致性错误、客户端状态映射和未配置云环境降级。
 
-以下必须标记 `NEEDS_VALIDATION`，不能由内存实现替代：
+M1.2-B local 自动验证：
 
-- CloudBase development 环境和三个真实云函数入口。
-- 微信可信调用上下文中 OpenID 的官方获取方式与失败行为。
+- development EnvId 与 local 安全默认、`wx.cloud.init` 仅初始化不调用身份函数。
+- `wx.cloud.callFunction` 的名称/参数边界、transport 失败和未知响应安全映射。
+- `wx-server-sdk.getWXContext()` 读取 SDK 注入的当前调用身份且不缓存、APPID 校验、
+  客户端 event/普通 context 伪造身份无效。
+- 四项服务端配置缺失均安全失败，没有 HMAC 默认值，HMAC 密钥少于 32 字节被拒绝。
+- CloudBase Repository 契约、Node SDK 扁平 `set/update` 参数、同事务创建、悬空
+  mapping/userId 碰撞/部分写入回滚、只识别精确冲突码、SDK 内部重试关闭。
+- 领域层最多三次冲突退避、非冲突不重试、getMe 不建号、政策原子/幂等。
+- 三个函数包能构建、加载 `main`，且部署产物不依赖函数目录外文件；在系统临时目录
+  `npm ci --omit=dev` 后可脱离仓库根 `node_modules` 加载，并已用 Node 20.19.6 验证。
+
+以下必须标记 `NEEDS_VALIDATION`，不能由 fake database 或可加载部署包替代：
+
+- 三个函数在 development 的实际部署和调用。
+- 关联 AppID 后 `getWXContext()` 的真实 OpenID/APPID 形状及失败行为。
 - 服务端环境变量注入、四环境密钥隔离和日志/控制台脱敏。
 - `users` 与 `identity_mappings` 的真实跨文档事务、写冲突错误识别与三次退避。
 - 数据库规则拒绝客户端直读/直写、真实索引/配额/冷启动行为。

@@ -4,27 +4,34 @@
   "private": true,
   "description": "微信原生小程序工程底座，用于可视化个人名牌与线下破冰 MVP。",
   "scripts": {
+    "cloudfunctions:build": "node tools/build-cloudfunctions.mjs",
+    "cloudfunctions:check": "node tools/build-cloudfunctions.mjs --check",
+    "cloudfunctions:check:isolated": "npm run cloudfunctions:check && node tools/verify-cloudfunction-packages.mjs",
     "shared:sync": "node tools/sync-miniprogram-shared.mjs",
     "shared:check": "node tools/sync-miniprogram-shared.mjs --check",
     "format": "prettier --write README.md \"cloudfunctions/**/*.{ts,json,md}\" \"*.{json,mjs,ts}\" \"tools/**/*.mjs\" \"miniprogram/**/*.{ts,json}\" \"shared/**/*.ts\" \"tests/**/*.ts\" && prettier --write project.private.config.json.example --parser json && npm run shared:sync",
     "format:check": "npm run shared:check && prettier --check README.md \"cloudfunctions/**/*.{ts,json,md}\" \"*.{json,mjs,ts}\" \"tools/**/*.mjs\" \"miniprogram/**/*.{ts,json}\" \"shared/**/*.ts\" \"tests/**/*.ts\" && prettier --check project.private.config.json.example --parser json",
     "lint": "npm run shared:check && eslint \"cloudfunctions/**/*.ts\" \"tools/**/*.mjs\" \"miniprogram/**/*.ts\" \"shared/**/*.ts\" \"tests/**/*.ts\" vitest.config.ts",
     "typecheck": "npm run shared:check && tsc --noEmit",
-    "test": "vitest run"
+    "test": "npm run cloudfunctions:check && vitest run"
   },
   "engines": {
     "node": ">=24 <25",
     "npm": ">=11 <12"
   },
   "devDependencies": {
+    "@cloudbase/node-sdk": "3.18.3",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.1",
+    "esbuild": "0.28.1",
     "eslint": "^10.7.0",
     "globals": "^17.7.0",
     "miniprogram-api-typings": "^5.2.1",
     "prettier": "^3.9.6",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "ws": "8.21.1",
+    "wx-server-sdk": "4.0.2"
   }
 }

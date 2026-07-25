@@ -1,5 +1,8 @@
-# accountGetMe（M1.2-A）
+# accountGetMe（M1.2-B local）
 
-本目录当前只导出可本地测试的处理器工厂，不包含真实 CloudBase 入口，不可部署。
+`index.ts` 导出真实只读 `main`。它在每次调用中通过
+`wx-server-sdk.getWXContext()` 取得可信微信身份，只读取 mapping 和 user，
+绝不隐式创建账号。
 
-真实微信可信身份上下文与云数据库读取适配器属于 M1.2-B development 云端验收范围。
+运行 `npm.cmd run cloudfunctions:build` 后，本目录包含可部署的 `index.js`；本轮没有
+上传或部署，真实读取和权限行为仍为 `NEEDS_VALIDATION`。

@@ -4,6 +4,7 @@ coverage/
 dist/
 .cache/
 *.log
+cloudfunctions/*/index.js
 
 # Local environment and WeChat DevTools settings
 project.private.config.json

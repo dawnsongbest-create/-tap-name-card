@@ -2,10 +2,11 @@
 
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
-当前仓库已完成 **M1.2-A 身份本地实现**：包含共享身份契约、服务端 HMAC
-身份键、内存事务仓储、三个身份处理器、客户端调用/状态映射及自动测试。当前没有真实
-CloudBase 入口、数据库或已部署云函数；名牌、模板、收藏、认识请求、相遇、联系方式、
-AI 和 NFC 均未实现。M1-02 在 development 云端验收前保持 `IN_REVIEW`。
+当前仓库已完成 **M1.2-B 本地代码接入**：包含共享身份契约、服务端 HMAC 身份键、
+CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个可构建云函数入口、客户端
+`wx.cloud` 初始化/调用和自动测试。仓库没有创建数据库集合、配置权限、注入真实 HMAC
+密钥或部署云函数；名牌、模板、收藏、认识请求、相遇、联系方式、AI 和 NFC 均未实现。
+M1-02 在 development 云端验收前保持 `IN_REVIEW`。
 
 ## 环境要求
 
@@ -29,27 +30,29 @@ npm.cmd ci
 
 1. 复制 `project.private.config.json.example` 为 `project.private.config.json`。
 2. 使用微信开发者工具打开仓库根目录。
-3. 在开发者工具中选择或填写自己的 AppID；仓库内的 `touristappid` 仅用于无真实密钥的工程导入基线。
+3. 确认项目 AppID 为 `wxc061682046272324`。
 4. 不要提交生成的 `project.private.config.json`。
 
-仓库提供 `local`、`development`、`staging`、`production` 四环境的类型和安全空配置。
-M1.2-A 不初始化云开发。真实 CloudBase 环境 ID、OpenID 和身份 HMAC 密钥不进入仓库，
-也不得进入小程序包。示例结构见：
+仓库提供 `local`、`development`、`staging`、`production` 四环境。当前开发构建选择
+`development`，显式配置 EnvId `cloud1-d1gh2crj26320f882`；`local`、`staging` 和
+`production` 继续关闭云能力。AppID 和 EnvId 是客户端可见的环境标识，不是授权凭证。
+OpenID、AppSecret、身份 HMAC 密钥和其他凭据不得进入仓库或小程序包。配置见：
 
 - `miniprogram/config/env.ts`
 - `miniprogram/config/env.example.ts`
 
-未配置云环境时，基础页会显示明确提示；只有点击 M1.2-A 手动身份探针才调用安全失败
-适配器，应用启动不会尝试云开发或静默建号。
+App 启动只执行 `wx.cloud.init`，身份状态保持 `ANONYMOUS`，不会调用三个身份云函数。
+只有点击 foundation 页的手动身份探针才发起身份请求。初始化或调用失败会返回安全失败，
+不会白屏或伪装成真实云能力。
 
 ## 微信开发者工具导入
 
 1. 打开微信开发者工具并选择“导入项目”。
 2. 项目目录选择本仓库根目录。
 3. 确认小程序目录识别为 `miniprogram/`。
-4. 无正式 AppID 时先使用仓库配置进行基础导入；需要真实平台能力时改用自己的 AppID。
-5. 编译后应看到标题为“本地身份基础页”的页面。
-6. 页面应展示当前环境、云开发未配置提示、四种基础状态和 M1.2-A 手动身份探针。
+4. 确认开发者工具已关联 development 环境。
+5. 编译后应看到工程身份基础页。
+6. 页面应展示 development 已配置提示、四种基础状态和手动身份探针。
 
 `project.config.json`、原生 TypeScript、页面注册与两套根目录识别已在 M1.1/M1.2-A
 微信开发者工具人工验收中通过。若开发者工具后续调整或移除字段，应重新验证并记录到
@@ -62,9 +65,13 @@ npm.cmd run format:check
 npm.cmd run lint
 npm.cmd run typecheck
 npm.cmd test
+npm.cmd run cloudfunctions:check
+npm.cmd run cloudfunctions:check:isolated
 ```
 
 这些命令必须真实执行。命令存在不代表检查通过。
+`cloudfunctions:check:isolated` 会在系统临时目录按各函数锁文件安装生产依赖、检查完整
+依赖树并加载入口；它不连接或部署 CloudBase。
 
 ## 共享代码与微信编译边界
 
@@ -86,10 +93,10 @@ npm.cmd run shared:sync
 
 - `miniprogram/`：微信原生小程序代码和工程初始化页。
 - `miniprogram/shared/`：供微信编译器使用的生成镜像，不是第二份源代码。
-- `cloudfunctions/`：M1.2-A 本地处理器、服务端领域逻辑和内存仓储；没有可部署入口。
+- `cloudfunctions/`：身份领域层、微信可信身份、CloudBase 事务适配和三个可独立构建的云函数入口。
 - `shared/`：公共定义和工具的唯一源。
-- `tools/`：共享契约同步与一致性检查脚本。
-- `tests/`：M1.1 单元测试及 M1.2-A 身份单元/本地集成测试。
+- `tools/`：共享契约同步、云函数构建与部署边界检查脚本。
+- `tests/`：M1.1 单元测试及 M1.2-A/M1.2-B 身份单元和本地集成测试。
 - `docs/`：产品、架构、测试和任务基线。
 
 ## 换一台 Windows 电脑继续
@@ -100,15 +107,15 @@ npm.cmd run shared:sync
 4. 复制 `project.private.config.json.example`。
 5. 运行全部四项质量命令。
 6. 用微信开发者工具导入仓库根目录并编译工程初始化页。
-7. 确认 Git 状态中没有 `project.private.config.json`、真实 AppID、环境 ID 或密钥。
+7. 确认 Git 状态中没有 `project.private.config.json`、OpenID、AppSecret、HMAC 密钥或其他凭据。
 
 ## 常见问题
 
-### 未配置 CloudBase 时为什么身份探针返回 UNAVAILABLE？
+### 为什么手动身份探针仍可能返回 UNAVAILABLE？
 
-这是 M1.2-A 的预期行为。本地阶段不会伪造微信可信上下文，也没有创建 `users` 或
-`identity_mappings` 集合。真实 development 环境适配、事务和部署属于 M1.2-B
-`NEEDS_VALIDATION`。
+本地代码已经具备 CloudBase 入口，但真实集合、权限、环境变量和部署尚未完成。任何缺失
+配置或平台失败都会安全映射为不可用。只有 development 云端验收通过后才能声称真实能力
+可用。
 
 ### 为什么页面不是正式首页？
 
@@ -121,3 +128,6 @@ npm.cmd run shared:sync
 ### 可以在配置文件中加入真实 AppSecret 吗？
 
 不可以。AppSecret、AI Key 和其他服务端密钥只能放在受控云端环境变量中，绝不能进入客户端或 Git。
+
+完整人工部署顺序见
+[`docs/runbooks/CLOUDBASE_DEVELOPMENT.md`](docs/runbooks/CLOUDBASE_DEVELOPMENT.md)。

@@ -1,7 +1,8 @@
 import type { AppEnvironment, EnvironmentConfig } from '../shared/types/environment';
 import { parseAppEnvironment } from '../shared/validation/environment';
 
-const CURRENT_ENVIRONMENT_NAME = 'local';
+const DEVELOPMENT_CLOUD_ENV_ID = 'cloud1-d1gh2crj26320f882';
+const CURRENT_ENVIRONMENT_NAME = 'development';
 
 export const CURRENT_ENVIRONMENT = parseAppEnvironment(CURRENT_ENVIRONMENT_NAME);
 
@@ -12,7 +13,8 @@ export const ENVIRONMENT_CONFIGS: Readonly<Record<AppEnvironment, EnvironmentCon
   },
   development: {
     name: 'development',
-    cloudEnabled: false,
+    cloudEnabled: true,
+    cloudEnvId: DEVELOPMENT_CLOUD_ENV_ID,
   },
   staging: {
     name: 'staging',

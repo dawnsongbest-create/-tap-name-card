@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -276,3 +276,142 @@
 - 替代：等待云环境后一次实现；本地伪造 CloudBase SDK/配置并标完成。
 - 后果：本地算法可审查且平台缺口可见；云端适配仍是明确门禁。
 - 风险/复审：真实 SDK 入口和事务限制必须基于届时官方文档实现，不能照搬内存适配器细节。
+
+## ADR-029 M1.2-B 初始单 CloudBase Node SDK 方案
+
+- 状态：`SUPERSEDED_BY_ADR_030`。
+- 背景：M1.2-B 需要从每次云函数调用的可信 context 取得微信身份，并执行跨集合事务。
+  每个函数必须独立部署，不能依赖函数目录之外的 shared 源；AppID/EnvId 已由产品负责人
+  确认允许提交，但所有凭据必须留在云端。
+- 决策/原因：
+  - development 固定 AppID `wxc061682046272324`、EnvId
+    `cloud1-d1gh2crj26320f882`；两者是环境标识，不是授权凭证。
+  - App 启动只执行 `wx.cloud.init({env})`，身份保持 `ANONYMOUS`；三个身份函数只能由
+    用户明确操作触发。
+  - 服务端只直接依赖 `@cloudbase/node-sdk@3.18.3`，不同时直接引入第二套数据库 SDK。
+    入口对每次调用执行 `parseContext(context)`，只从本次 context 投影
+    `WX_OPENID/WX_APPID`，不读取或缓存进程级动态身份；数据库和 `runTransaction`
+    使用同一 SDK。
+  - `runTransaction` 的 SDK 内部重试参数固定为 `0`；Repository 只识别精确
+    `DATABASE_TRANSACTION_CONFLICT`，领域服务总尝试最多三次，非冲突不重试。
+  - `esbuild@0.28.1` 将业务/shared TypeScript 打进每个函数的根 `index.js`；
+    `@cloudbase/node-sdk@3.18.3` 与 `ws@8.21.1` 作为精确外部依赖写入每个独立
+    `package.json`，运行时目标为 Nodejs20.19。
+- 替代：
+  - `wx-server-sdk@3.0.1`：官方小程序示例使用该版本，但 2026-07-25 的本地
+    `npm audit` 显示其固定旧 Node SDK 链路包含 12 项公告风险，其中 2 项 critical，
+    因此不采用为部署基线。
+  - 同时直接引入 `wx-server-sdk` 和 `@cloudbase/node-sdk`：职责重叠且增加身份/事务
+    语义混用风险。
+  - 手工复制 shared 或让部署入口跨目录引用：容易漂移或上传缺文件。
+- 后果：三个函数包可以独立构建和加载，客户端身份字段不能成为授权依据；真实 HMAC
+  密钥仍只通过函数环境变量注入。当前 Node SDK 基线的 `npm audit` 仍有 5 项传递依赖
+  公告（1 moderate、4 high、0 critical），均来自 CloudBase SDK 链路；本阶段不使用
+  任意外部 URL、代理、JWT 或客户端直传数据库表达式，但在真实部署评审和生产前必须
+  复核上游修复版本，不能静默执行 `npm audit fix --force`。
+- 官方依据：
+  - CloudBase Node 云函数资源：
+    <https://docs.cloudbase.net/cloud-function/resource-integration/cloudbase>
+  - CloudBase 事务：
+    <https://docs.cloudbase.net/en/database/transaction>
+  - 云函数实例 context 安全：
+    <https://docs.cloudbase.net/cloud-function/instance>
+  - Nodejs20.19 运行时：
+    <https://docs.cloudbase.net/en/cloud-function/runtime-support>
+- 风险/复审：真实 context 字段、文档不存在返回、冲突错误码、事务隔离、在线安装依赖和
+  Nodejs20.19 加载行为必须在 development 验收；任何 SDK 升级都要重新运行合约测试、
+  构建加载检查和 `npm audit`。
+
+复审结论：官方“小程序 `wx.cloud.callFunction` → 微信云函数”链路只明确保证
+`wx-server-sdk.getWXContext()` 提供可信 `OPENID/APPID`，没有依据证明
+`@cloudbase/node-sdk.parseContext(context)` 单独提供同等能力；该方案在 M1.2-B
+独立审查中被判定为阻断并废弃。
+
+## ADR-030 M1.2-B 分离微信可信身份与 CloudBase 数据库 SDK
+
+- 状态：`ACCEPTED_LOCAL`；真实环境为 `NOT_VALIDATED`，生产依赖公告为审查条件。
+- 背景：M1.2-B 独立审查必须证明真实微信可信身份来源、Node 20 兼容和独立部署包。
+  mock `context` 能解析并不能证明微信调用链真实可用；同时 Node SDK 的
+  `DocumentReference.set/update` 参数形状必须与实际包一致。
+- 决策/原因：
+  - `wx-server-sdk@4.0.2` 只负责 `DYNAMIC_CURRENT_ENV` 初始化与每次调用
+    `getWXContext()`；只投影 `OPENID/APPID`。`event`、普通第二参数 `context` 和客户端
+    传入的身份字段均不参与授权，身份不做模块全局缓存。
+  - 选择 4.0.2 是因为它是 2026-07-25 npm 官方 `latest`，仍提供
+    `getWXContext()`，并把内部 CloudBase Node SDK 从 2.10.0 升到 3.17.2；
+    CloudBase 教程中的 3.0.1 锁文件有 12 项公告（含 2 critical），不再采用。
+  - `@cloudbase/node-sdk@3.18.3` 只负责数据库与 `runTransaction`；其 npm
+    `engines` 为 Node >=12，适用于 Nodejs20.19。虽然 `wx-server-sdk` 内部也依赖
+    Node SDK，但业务代码不从它取得数据库，避免两个数据库客户端混用。
+  - `ws@8.21.1` 作为直接依赖只用于锁定 CloudBase SDK 的传递版本，不承担身份或业务。
+  - Repository 遵循 Node SDK 的 `set(data)/update(data)` 扁平参数；禁止使用小程序
+    数据库 API 风格的 `{data}` 包装。fake database 同步采用此形状，以免测试掩盖嵌套写入。
+  - `runTransaction(..., 0)` 关闭 SDK 内部冲突重试；只把官方错误码
+    `DATABASE_TRANSACTION_CONFLICT` 映射为领域冲突，总尝试最多三次。真实错误对象属性和
+    并发行为仍需 development 验证。
+  - `cloudfunctions:check:isolated` 只复制 `index.js/package.json/package-lock.json`
+    到系统临时目录，执行 `npm ci --omit=dev`、生产依赖树检查和入口加载后清理。
+    三个包已在本机默认 Node 24 和临时 Node 20.19.6 下分别通过。
+- 替代：
+  - 继续 `parseContext(context)`：可信微信身份缺乏官方依据，拒绝。
+  - 只用 `wx-server-sdk` 做身份和数据库：可减少直接 SDK，但会把 Repository 固定到
+    其内部 3.17.2；本阶段保留最新独立 Node SDK 事务适配，职责明确。
+  - 固定 `wx-server-sdk@3.0.1`：存在旧 CloudBase 依赖与 2 项 critical 公告，拒绝。
+  - 使用 npm overrides 强行升级传递依赖：可能破坏官方 SDK 兼容，未经真实环境验证不采用。
+- 后果：
+  - 可信身份调用方式与官方微信云函数链一致；两个直接 SDK 的职责可审计。
+  - 每个函数生产锁文件当前 `npm audit` 为 6 项公告：1 moderate、5 high、0 critical。
+    代码不把客户端值用于 SDK URL、代理、JWT、数据库表达式或 WebSocket，但这不能消除
+    上游公告；deployment 前必须复核新版或由产品负责人书面接受残余风险。
+  - 本地 SDK adapter、写入参数和隔离加载通过仍不等于真实 OpenID、事务、权限或部署通过。
+- 官方依据：
+  - 微信小程序调用云函数与 `getWXContext()`：
+    <https://docs.cloudbase.net/recipes/add-cloud-function-wechat-miniprogram>
+  - `wx-server-sdk` 官方 npm 包：
+    <https://www.npmjs.com/package/wx-server-sdk>
+  - CloudBase Node SDK 云函数资源：
+    <https://docs.cloudbase.net/cloud-function/resource-integration/cloudbase>
+  - CloudBase Node SDK 更新日志：
+    <https://docs.cloudbase.net/en/api-reference/server/node-sdk/changelog>
+  - Node SDK 数据更新参数：
+    <https://docs.cloudbase.net/en/api-reference/webv2/database/update>
+  - 事务与冲突：
+    <https://docs.cloudbase.net/en/database/transaction>
+  - 事务冲突错误码：
+    <https://docs.cloudbase.net/en/error-code/DATABASE_TRANSACTION_CONFLICT>
+  - Nodejs20.19 运行时：
+    <https://docs.cloudbase.net/cloud-function/runtime-support>
+- 风险/复审：真实 `getWXContext()`、AppID 关联、权限执行身份、Node SDK 在线安装、
+  事务错误对象和 6 项依赖公告在 development 部署前仍是门禁。任一 SDK 升级必须重跑
+  adapter、Repository、构建、Node 20 隔离加载和 `npm audit`。
+
+## ADR-031 限定接受 M1.2-B development 验收的 SDK 传递依赖风险
+
+- 状态：`ACCEPTED_FOR_DEVELOPMENT_VALIDATION_ONLY`
+- 日期：2026-07-25
+- 决策人：产品负责人
+- 背景：M1.2-B 本地审查确认，三个云函数的当前生产锁文件经
+  `npm audit --omit=dev` 检出 6 项官方 SDK 传递依赖公告：1 moderate、5 high、
+  0 critical。现有自动修复建议会破坏性降级 CloudBase SDK，未经真实环境验证不能采用。
+- 决策：产品负责人书面接受上述剩余风险，但只用于完成 M1.2-B 的隔离 development
+  CloudBase 环境验收。该接受使 M1.2-B 本地实现和 development 部署候选可以标记
+  `PASS`，并仅解除 ADR-030 中“依赖公告阻止 development 部署候选通过”的条件；
+  不解除 ADR-030 的任何真实云端验证门禁，不代表任何真实 CloudBase 能力已经验证，
+  也不允许把 M1-02 标记为 `DONE`。
+- 强制边界：
+  - 仅可使用独立 development CloudBase 环境和测试数据；
+  - 不向正式用户开放，不得用于 staging 或 production；
+  - 不开放 HTTP 或其他公网调用入口；
+  - 数据库客户端禁止直接读写；
+  - 云函数只允许关联的小程序调用，并使用最小权限；
+  - 不因本风险接受放宽 OpenID、HMAC 密钥、AppSecret、日志或数据权限约束。
+- 到期与复审：
+  - 本风险接受只在 M1.2-B development 验收期间有效；
+  - 上线前必须重新执行 `npm audit`；
+  - 上线前必须升级到已修复的官方 SDK 版本，或重新完成安全评估并形成新的正式决策；
+  - staging、production 或面向真实用户的任何使用都必须重新审批，不能继承本记录。
+- 后果：
+  - M1.2-B 本地代码审查结论可由 `CONDITIONAL_PASS` 更新为 `PASS`；
+  - 真实 CloudBase 能力继续为 `NOT_VALIDATED`；
+  - 整体 M1-02 继续为 `IN_REVIEW`，只有真实 development 云端验收完成后才能评估
+    是否标记 `DONE`。

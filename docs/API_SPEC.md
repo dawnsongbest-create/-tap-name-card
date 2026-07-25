@@ -1,6 +1,6 @@
 # 「碰一下名牌」云函数 API 规格
 
-> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 > 本文定义逻辑契约，不声明任何未验证的微信/CloudBase API 名称。  
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[UI](./UI_SPEC.md)｜[测试](./TEST_PLAN.md)
 
@@ -65,6 +65,19 @@ interface SharedContact extends ContactSummary { value?: string; fileUrl?: strin
 | `accountDelete` P0（M4） | `input:{confirm:true,meta}` → `Ack` | 登录、本人、二次确认 | W users/cards/contacts/blocks；先 DELETED 和公开/私密入口失效，后续清理可恢复；恢复/幂等字段在 M4 决定 | 严格；`INVALID_INPUT/DUPLICATE_ACTION/SERVICE_UNAVAILABLE`；故障注入与重放；未知结果调用 accountGetMe/公共 Token 验证 |
 | `templateList` P0 | `input:{cardType?:CardType}` → `{templates:TemplateSummary[]}` | 匿名可读；只返回启用的仓库配置 | R 版本化模板注册；无数据库写 | 可缓存；`INVALID_INPUT/SERVICE_UNAVAILABLE`；六模板与类型过滤；失败用安全内置配置/重试 |
 | `templateGet` P0 | `input:{templateId:string,version?:number}` → `{template:CardTemplate}` | 匿名可读；ID/版本白名单 | R 模板注册；配置错误安全回退并记录 | 可缓存；`RESOURCE_NOT_FOUND/SERVICE_UNAVAILABLE`；版本兼容；失败返回列表 |
+
+### 2.1 M1.2-B 平台调用边界
+
+- 客户端通过 `wx.cloud.callFunction({name,data:{input,requestId}})` 调用；`requestId`
+  只用于追踪，客户端事件中的 `openId/userId` 不进入授权流程。
+- 云函数入口按每次调用执行 `wx-server-sdk.getWXContext()` 获取可信 `OPENID/APPID`，
+  不使用客户端 `event` 或普通函数 `context` 中的身份字段，并校验 APPID；
+  缺失身份返回 `AUTH_REQUIRED`，APPID 不匹配安全映射为 `SERVICE_UNAVAILABLE`。
+- 函数启动依赖 `IDENTITY_HMAC_SECRET`、`EXPECTED_MINIPROGRAM_APP_ID`、
+  `TERMS_VERSION`、`PRIVACY_VERSION`；任一缺失均返回 `SERVICE_UNAVAILABLE`。
+- 本地入口和部署包已可构建并在隔离临时目录安装生产依赖后加载；真实微信上下文、
+  环境变量、事务和权限仍为
+  `NEEDS_VALIDATION`。
 
 ## 3. 名牌
 

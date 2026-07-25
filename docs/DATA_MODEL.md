@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 数据模型
 
-> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 > 本文为逻辑模型；CloudBase 实际索引、事务和唯一能力须在 M1/M4 依据官方文档及并发测试确认。  
 > 关联：[架构](./ARCHITECTURE.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
@@ -55,6 +55,12 @@ CloudBase 若无严格唯一约束：用键本身作为文档 `_id` 或建立 `u
 - 权限：只允许服务端读取/写入，客户端不得直读或直写。
 - 原子性：首次创建 user 与 mapping 必须在同一服务端事务；写冲突后有限退避，
   最多三次，耗尽返回 `SERVICE_UNAVAILABLE`，不得退化为普通先查后写。
+- 本地实现：`CloudBaseUserRepository` 只按确定性文档 ID 读取，并在一次
+  `runTransaction(..., 0)` 中创建 user 与 mapping；只将精确
+  `DATABASE_TRANSACTION_CONFLICT` 映射为可重试冲突。写入调用遵循 Node SDK 的
+  `set(data)/update(data)` 扁平参数，不使用小程序数据库 API 的 `{data}` 包装。
+- 云端状态：集合尚未创建；真实文档不存在返回形状、冲突码、权限和事务隔离仍为
+  `NEEDS_VALIDATION`。
 
 ### 3.2 `cards`（P0）
 

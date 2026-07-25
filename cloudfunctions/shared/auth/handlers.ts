@@ -10,7 +10,7 @@ import { parseAccountAcceptPoliciesInput, parseEmptyAuthInput } from '../contrac
 import type { AuthService } from './auth-service';
 import { AuthServiceError } from './auth-service-error';
 
-type AuthHandler<TOutput> = (
+export type AuthHandler<TOutput> = (
   input: unknown,
   requestId: string,
 ) => Promise<CloudFunctionResult<TOutput>>;

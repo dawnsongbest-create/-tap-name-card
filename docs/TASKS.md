@@ -1,10 +1,10 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01 为 `DONE`；M1-02 已完成 M1.2-A 本地实现并进入
+> 当前规则：M0 已人工通过；M1-01 为 `DONE`；M1-02 已完成 M1.2-B 本地代码接入并保持
 > `IN_REVIEW`，只有 development 云端验收通过后才能为 `DONE`；M1-03 及以后未开始。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
@@ -64,10 +64,15 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
   实现。
 - M1.2-A 已完成：HMAC identityKey、CurrentUserView 白名单、内存原子事务、最多三次
   冲突退避、独立政策确认、客户端状态/手动探针；应用启动和匿名浏览不建号。
+- M1.2-B local 已完成：development AppID/EnvId 配置、`wx.cloud` 初始化和 caller、
+  按调用 `wx-server-sdk.getWXContext()` 解析可信微信身份、CloudBase Repository、
+  四项环境变量门禁、三个 `main` 入口、自包含 Nodejs20 构建包及隔离生产依赖加载测试；
+  未连接或修改云端资源。
 - 本地验收：首次幂等、50 路并发仅一条 user/mapping、OpenID/密钥不返回、
-  ACTIVE/RESTRICTED/DELETED 映射、政策原子/幂等和错误码自动测试。
-- M1.2-B `NEEDS_VALIDATION`：真实 development 环境、可信微信上下文、环境变量、
-  CloudBase 事务/规则/部署、开发者工具和 iPhone/Android 双账号冒烟。
+  ACTIVE/RESTRICTED/DELETED 映射、政策原子/幂等、客户端调用边界、SDK adapter、
+  fake CloudBase 事务和部署包自动测试。
+- M1.2-B 云端 `NEEDS_VALIDATION`：真实可信微信上下文、环境变量、CloudBase
+  事务冲突/规则/部署、开发者工具和 iPhone/Android 双账号冒烟。
 - 风险：真实 CloudBase 冲突语义、权限规则、匿名路由、环境误连。状态：`IN_REVIEW`。
 
 ### M1-03 共享基础设施

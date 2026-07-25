@@ -8,7 +8,7 @@ import {
 import { isAppEnvironment, parseAppEnvironment } from '../../shared/validation/environment';
 
 describe('environment configuration', () => {
-  it('defines all four environments without real CloudBase IDs', () => {
+  it('enables only the approved development CloudBase environment', () => {
     expect(Object.keys(ENVIRONMENT_CONFIGS)).toEqual([
       'local',
       'development',
@@ -16,10 +16,23 @@ describe('environment configuration', () => {
       'production',
     ]);
 
-    for (const config of Object.values(ENVIRONMENT_CONFIGS)) {
-      expect(config.cloudEnabled).toBe(false);
-      expect(config.cloudEnvId).toBeUndefined();
-    }
+    expect(ENVIRONMENT_CONFIGS.development).toEqual({
+      name: 'development',
+      cloudEnabled: true,
+      cloudEnvId: 'cloud1-d1gh2crj26320f882',
+    });
+    expect(ENVIRONMENT_CONFIGS.local).toEqual({
+      name: 'local',
+      cloudEnabled: false,
+    });
+    expect(ENVIRONMENT_CONFIGS.staging).toEqual({
+      name: 'staging',
+      cloudEnabled: false,
+    });
+    expect(ENVIRONMENT_CONFIGS.production).toEqual({
+      name: 'production',
+      cloudEnabled: false,
+    });
   });
 
   it('validates known environment names', () => {
@@ -37,6 +50,13 @@ describe('environment configuration', () => {
     expect(getEnvironmentSummary('local')).toEqual({
       environment: 'local',
       cloudConfigured: false,
+    });
+  });
+
+  it('selects development as the checked-in runtime environment', () => {
+    expect(getEnvironmentSummary()).toEqual({
+      environment: 'development',
+      cloudConfigured: true,
     });
   });
 });

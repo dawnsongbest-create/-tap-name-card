@@ -1,8 +1,8 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 >
-> 约束：身份领域层已在本地实现；真实 development CloudBase 身份、事务、规则和部署仍为 `NEEDS_VALIDATION`。
+> 约束：身份领域层和 CloudBase 平台适配已在本地实现；真实 development 身份、事务、规则和部署仍为 `NEEDS_VALIDATION`。
 >
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
@@ -193,11 +193,14 @@
 | `staging`     | 双账号、审核、分享、真机验收 | 可重置测试数据            |
 | `production`  | 小范围正式发布               | 最小权限、审计、备份/恢复 |
 
-四套环境不得共用数据库、存储、微信配置、AI 密钥、审核/小程序码配置、日志或测试数据。仓库只提交 `.example`；AppSecret/AI Key 仅在云端受控环境变量；客户端包内无服务端密钥。
+四套环境不得共用数据库、存储、微信配置、AI 密钥、审核/小程序码配置、日志或测试数据。
+AppID 和 EnvId 是环境标识，允许提交；AppSecret、HMAC/AI Key 仅在云端受控环境变量，
+客户端包内无服务端密钥。当前 development 使用 AppID `wxc061682046272324` 和 EnvId
+`cloud1-d1gh2crj26320f882`，其余环境仍关闭。
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 当前仓库树（M1.2-A）
+## 16. 当前仓库树（M1.2-B local）
 
 ```text
 tap-name-card/
@@ -237,20 +240,32 @@ tap-name-card/
    ├─ TASKS.md DECISIONS.md
 ```
 
-M1.2-A 在 M1.1 工程底座上增加本地可验证的身份边界：
+M1.2-B 在 M1.2-A 身份领域层上增加本地可验证的平台适配：
 
 - `pages/foundation` 明确标记为工程初始化页，不是正式 P02 首页或产品原型。
 - `components/page-state` 只演示 Loading、Empty、Error 和 Retry 最小接口；完整页面状态体系仍属于后续 Sprint。
-- `cloudfunctions/` 有本地处理器和内存事务适配器，但没有 CloudBase 入口、集合或部署。
-- 四个环境均有集中类型和安全空配置；真实环境 ID 不入库，未配置时页面显示开发提示。
+- `cloudfunctions/` 有 CloudBase Repository、可信上下文适配和三个 `exports.main` 构建入口；
+  `esbuild` 将内部 shared 源打进每个 `index.js`，部署包不跨函数目录引用。
+- development 显式启用真实 EnvId；local/staging/production 关闭。App 启动只初始化
+  `wx.cloud`，不调用身份函数。
 - 微信开发者工具配置采用 `miniprogramRoot`、`cloudfunctionRoot`、原生 `typescript`
-  编译插件和公开的 `touristappid` 基线；目录识别、TypeScript/WXML/WXSS 编译及页面注册
-  已通过 M1.1 与 M1.2-A 人工验收。
+  编译插件和真实 AppID；目录识别、TypeScript/WXML/WXSS 编译及页面注册已通过
+  M1.1 与 M1.2-A 人工验收，M1.2-B 尚待复验。
 - 微信侧和云函数侧都不跨运行时根目录导入：根 `shared/` 是契约唯一源，
   `miniprogram/shared/` 与 `cloudfunctions/shared/contracts/` 是生成镜像；
   `shared:sync` 负责同步，静态质量命令通过 `shared:check` 阻止漂移。
-- foundation 页面只提供手动身份探针；应用启动不调用 `authEnsureUser`，保证匿名浏览边界。
-- 本地内存事务只证明领域算法和故障路径，不等同于真实 CloudBase 事务已验证。
+- foundation 页面只提供手动身份探针；应用启动不调用三个身份函数，保证匿名浏览边界。
+- `wx-server-sdk@4.0.2` 只负责微信云函数初始化和按每次调用执行
+  `getWXContext()`，投影可信 `OPENID/APPID`；不从 `event` 或普通函数 `context` 推断身份，
+  不缓存进程级动态身份。
+- `@cloudbase/node-sdk@3.18.3` 只负责数据库与事务；Repository 使用 Node SDK 的
+  `set(data)/update(data)` 扁平数据参数，不混用小程序端 `{data}` 包装。
+- 两个直接 SDK 和 `ws@8.21.1` 均锁定精确版本；运行时目标为 Nodejs20.19。
+- SDK `runTransaction` 的内部重试被设为 `0`，领域层只对精确
+  `DATABASE_TRANSACTION_CONFLICT` 做最多三次退避。该错误结构和并发行为仍需真实环境验证。
+- 本地 fake database 只证明适配契约、写入参数形状、回滚和故障路径，不等同于真实
+  CloudBase 事务已验证。隔离构建门禁会在系统临时目录安装各包生产依赖并加载入口，
+  也不等同于已部署。
 
 ## 16.1 M1.1 工具链
 

@@ -1,6 +1,8 @@
-# authEnsureUser（M1.2-A）
+# authEnsureUser（M1.2-B local）
 
-本目录当前只导出可本地测试的处理器工厂，不包含真实 CloudBase 入口，不可部署。
+`index.ts` 导出真实 `main`，只在用户明确操作后确保身份存在。它在每次调用中通过
+`wx-server-sdk.getWXContext()` 取得可信微信身份，并用独立 CloudBase Node SDK
+在同一事务创建 user 和 mapping。
 
-真实微信可信身份上下文、服务端环境变量和云数据库事务适配器属于 M1.2-B
-development 云端验收范围。
+运行 `npm.cmd run cloudfunctions:build` 后，本目录包含可部署的 `index.js`；本轮没有
+上传或部署，真实并发冲突行为仍为 `NEEDS_VALIDATION`。

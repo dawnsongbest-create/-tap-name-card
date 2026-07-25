@@ -95,5 +95,9 @@ describe('WeChat mini-program compilation boundary', () => {
 
     expect(appSource).not.toContain('authEnsureUser');
     expect(appSource).not.toContain('ensureUser');
+    expect(appSource).not.toContain('accountGetMe');
+    expect(appSource).not.toContain('accountAcceptPolicies');
+    expect(appSource).not.toContain('callFunction');
+    expect(appSource).toContain('initializeCloudForEnvironment');
   });
 });

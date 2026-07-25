@@ -149,28 +149,42 @@ export class AuthService {
       throw new AuthServiceError('POLICY_VERSION_UNSUPPORTED');
     }
 
-    try {
-      const result = await this.dependencies.repository.acceptPoliciesAtomically({
-        identityKey: identity.identityKey,
-        versions: currentVersions,
-        acceptedAt: this.now(),
-      });
+    const acceptedAt = this.now();
 
-      if (!result) {
-        throw new AuthServiceError('USER_NOT_FOUND');
+    for (let attempt = 0; attempt < this.maxTransactionAttempts; attempt += 1) {
+      try {
+        const result = await this.dependencies.repository.acceptPoliciesAtomically({
+          identityKey: identity.identityKey,
+          versions: currentVersions,
+          acceptedAt,
+        });
+
+        if (!result) {
+          throw new AuthServiceError('USER_NOT_FOUND');
+        }
+
+        return {
+          user: toCurrentUserView(result.user, currentVersions),
+          replayed: result.replayed,
+        };
+      } catch (error) {
+        if (error instanceof AuthServiceError) {
+          throw error;
+        }
+
+        if (!(error instanceof TransactionConflictError)) {
+          this.throwRepositoryError(error);
+        }
+
+        if (attempt + 1 >= this.maxTransactionAttempts) {
+          throw new AuthServiceError('SERVICE_UNAVAILABLE');
+        }
+
+        await this.delay(retryDelayMilliseconds(attempt));
       }
-
-      return {
-        user: toCurrentUserView(result.user, currentVersions),
-        replayed: result.replayed,
-      };
-    } catch (error) {
-      if (error instanceof AuthServiceError) {
-        throw error;
-      }
-
-      this.throwRepositoryError(error);
     }
+
+    throw new AuthServiceError('SERVICE_UNAVAILABLE');
   }
 
   private getCurrentPolicyVersions(): PolicyVersions {
