@@ -1,2 +1,6 @@
-// M1.1 只保留状态承载位置；正式会话与业务状态属于后续 Sprint。
-export {};
+export {
+  createAnonymousAuthState,
+  createLoadingAuthState,
+  mapAuthResultToState,
+  type AuthSessionState,
+} from './auth';

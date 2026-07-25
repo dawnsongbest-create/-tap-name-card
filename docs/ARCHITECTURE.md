@@ -1,8 +1,8 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M1.1 v1.0｜日期：2026-07-24｜状态：`IN_REVIEW`
+> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 >
-> 约束：M1.1 工程底座已初始化；微信开发者工具、真实 AppID 与 CloudBase 能力仍未验证。
+> 约束：身份领域层已在本地实现；真实 development CloudBase 身份、事务、规则和部署仍为 `NEEDS_VALIDATION`。
 >
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
@@ -45,15 +45,15 @@
 
 ## 3. 客户端分层
 
-| 层 | 职责 | 禁止 |
-|---|---|---|
-| `pages/` | P01—P26 路由、页面状态、用户意图 | 直接操作数据库、复制业务状态字符串 |
-| `components/` | 页面状态、名牌渲染、表单、确认层、可访问交互 | 自行决定权限或业务状态迁移 |
-| `domain/` | 领域类型、状态派生、视图模型、纯函数 | 持有密钥、执行远程写 |
-| `services/` | 云函数调用、上传、分享、审核/码适配客户端、错误映射 | 将内部异常透传 UI |
-| `state/` | 会话、当前用户、草稿同步队列、页面缓存 | 作为业务事实唯一来源 |
-| `templates/` | 版本化模板注册、渲染描述、安全默认模板 | 用户上传 CSS/JS/字体 |
-| `utils/` | 时间、Token 展示、文本/图片辅助 | 隐式业务规则 |
+| 层            | 职责                                                | 禁止                               |
+| ------------- | --------------------------------------------------- | ---------------------------------- |
+| `pages/`      | P01—P26 路由、页面状态、用户意图                    | 直接操作数据库、复制业务状态字符串 |
+| `components/` | 页面状态、名牌渲染、表单、确认层、可访问交互        | 自行决定权限或业务状态迁移         |
+| `domain/`     | 领域类型、状态派生、视图模型、纯函数                | 持有密钥、执行远程写               |
+| `services/`   | 云函数调用、上传、分享、审核/码适配客户端、错误映射 | 将内部异常透传 UI                  |
+| `state/`      | 会话、当前用户、草稿同步队列、页面缓存              | 作为业务事实唯一来源               |
+| `templates/`  | 版本化模板注册、渲染描述、安全默认模板              | 用户上传 CSS/JS/字体               |
+| `utils/`      | 时间、Token 展示、文本/图片辅助                     | 隐式业务规则                       |
 
 页面状态统一为 `LOADING | READY | EMPTY | NETWORK_ERROR | FORBIDDEN | NOT_FOUND | REVIEWING | HIDDEN | UNAVAILABLE | RATE_LIMITED`；操作另有 `IDLE | SUBMITTING | SUCCEEDED | FAILED | UNKNOWN_AFTER_TIMEOUT`。超时后先查事实，再重试。
 
@@ -105,6 +105,13 @@
 - 数据库规则默认拒绝客户端直接写核心集合；私密集合拒绝客户端直读。
 - `openId` 只存在 `users` 服务端私有字段和受控日志关联，不进入公共 DTO。
 - 被限制用户可读取/导出必要自有数据，但不能发布、认识或申请联系方式。
+- `identityKey=HMAC-SHA256(environmentSpecificSecret,"wechat-openid:v1:"+openId)`；
+  密钥只存在服务端环境变量，四环境不得复用。
+- `identity_mappings/{identityKey}` 只保存 `userId/provider/createdAt`，不保存 OpenID。
+- `CurrentUserView.status` 只可能是 `ACTIVE | RESTRICTED`；数据库 `DELETED` 统一返回
+  `ACCOUNT_DELETED`，由客户端映射为本地 `DELETED/UNAVAILABLE`。
+- `authEnsureUser`、`accountGetMe`、`accountAcceptPolicies` 不要求 `operationId`；
+  `requestId` 只用于追踪。政策确认用“同版本已确认”保证幂等。
 
 ## 8. 草稿、审核与快照
 
@@ -128,31 +135,31 @@
 
 ## 10. 平台适配层
 
-| 适配层 | P | 接口语义 | 降级 |
-|---|---:|---|---|
-| 内容审核 | P0 | 文本、图片、链接/二维码的提交与结果归一化 | 发布保持 `REVIEWING` 或明确失败；旧版继续公开 |
-| 小程序码 | P0 | 输入已授权页面/场景参数，返回受控文件引用 | 提示重试；分享链接仍可用；允许无码导出 |
-| 微信分享 | P0 | 固定名牌与当前名牌入口参数 | 复制/展示小程序码等明确兜底，具体能力待验证 |
-| 相册保存 | P0 | 保存授权、拒绝、重试 | 展示授权说明或仅预览 |
-| AI | P1 | 最小上下文、结构化候选、安全状态 | 保留原文，人工编辑；P0 关闭 |
-| NFC | P2 | 随机动态入口解析 | QR 兜底；P0 不实现 |
+| 适配层   |   P | 接口语义                                  | 降级                                          |
+| -------- | --: | ----------------------------------------- | --------------------------------------------- |
+| 内容审核 |  P0 | 文本、图片、链接/二维码的提交与结果归一化 | 发布保持 `REVIEWING` 或明确失败；旧版继续公开 |
+| 小程序码 |  P0 | 输入已授权页面/场景参数，返回受控文件引用 | 提示重试；分享链接仍可用；允许无码导出        |
+| 微信分享 |  P0 | 固定名牌与当前名牌入口参数                | 复制/展示小程序码等明确兜底，具体能力待验证   |
+| 相册保存 |  P0 | 保存授权、拒绝、重试                      | 展示授权说明或仅预览                          |
+| AI       |  P1 | 最小上下文、结构化候选、安全状态          | 保留原文，人工编辑；P0 关闭                   |
+| NFC      |  P2 | 随机动态入口解析                          | QR 兜底；P0 不实现                            |
 
 不得在验证前写死任何微信/CloudBase API 名称或返回结构。
 
 ## 11. 事务与幂等
 
-| 操作 | 边界/业务键 | 结果 |
-|---|---|---|
-| 建用户 | `openId` 唯一语义 + 事务/占位锁 | 重复调用返回同一用户 |
-| 存草稿 | `cardId + ownerId + clientMutationId`、`baseRevision` | 重放同一修订结果 |
-| 设置当前名牌 | owner 范围事务/锁 | 先清旧后设新，始终至多一张 |
-| 收藏 | `collectionKey=ownerId:cardId` | upsert/恢复，不重复 |
-| 发认识请求 | `requestKey` 保证单次操作幂等；排序双方 ID 的 `pendingPairKey` 占位 | 同一对用户无论方向至多一条有效 `PENDING` |
-| 接受并回赠 | `greetingId + operationId`；请求、快照、相遇、通知一个原子边界 | 仅一次 `RETURNED`、一个 `pairKey`、一组通知 |
-| 联系申请 | `encounterId + requester + active-cycle` | 至多一个有效 `PENDING` |
-| 接受联系方式 | `contactRequestId + operationId` | 只保存双方选定 ID，结果可重放 |
-| 拉黑/解除 | `blockKey=blocker:blocked`；关闭待处理请求、释放 greeting 的 pendingPairKey，并撤销已接受的站内联系方式展示 | 重复安全；不通知被拉黑者；解除后仅在双方均无 block 时恢复 encounter ACTIVE，不复活旧请求或共享 |
-| 注销 | `userId + deletionVersion` | 公开入口和私密读取先失效，后台清理可恢复执行 |
+| 操作         | 边界/业务键                                                                                                 | 结果                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 建用户       | HMAC `identityKey` 确定性映射；user 与 mapping 同一事务；冲突后最多三次退避                                 | 重复/并发调用返回同一用户；耗尽返回 `SERVICE_UNAVAILABLE`                                      |
+| 存草稿       | `cardId + ownerId + clientMutationId`、`baseRevision`                                                       | 重放同一修订结果                                                                               |
+| 设置当前名牌 | owner 范围事务/锁                                                                                           | 先清旧后设新，始终至多一张                                                                     |
+| 收藏         | `collectionKey=ownerId:cardId`                                                                              | upsert/恢复，不重复                                                                            |
+| 发认识请求   | `requestKey` 保证单次操作幂等；排序双方 ID 的 `pendingPairKey` 占位                                         | 同一对用户无论方向至多一条有效 `PENDING`                                                       |
+| 接受并回赠   | `greetingId + operationId`；请求、快照、相遇、通知一个原子边界                                              | 仅一次 `RETURNED`、一个 `pairKey`、一组通知                                                    |
+| 联系申请     | `encounterId + requester + active-cycle`                                                                    | 至多一个有效 `PENDING`                                                                         |
+| 接受联系方式 | `contactRequestId + operationId`                                                                            | 只保存双方选定 ID，结果可重放                                                                  |
+| 拉黑/解除    | `blockKey=blocker:blocked`；关闭待处理请求、释放 greeting 的 pendingPairKey，并撤销已接受的站内联系方式展示 | 重复安全；不通知被拉黑者；解除后仅在双方均无 block 时恢复 encounter ACTIVE，不复活旧请求或共享 |
+| 注销         | M4 再确定幂等/恢复键                                                                                        | 公开入口和私密读取先失效，后台清理可恢复执行                                                   |
 
 若 CloudBase 当前能力不能提供所需跨集合事务/严格唯一索引，使用“确定性业务键文档 + 锁/占位文档 + 条件更新 + 事务内复查 + 冲突后读取胜者”的替代方案；能力与限制必须在 M1/M4 Spike 用官方文档和并发测试确认。
 
@@ -179,18 +186,18 @@
 
 ## 15. 环境与密钥
 
-| 环境 | 用途 | 数据 |
-|---|---|---|
-| `local` | 纯函数/组件/模拟适配器测试 | 合成数据，不连接生产 |
-| `development` | 开发者联调 | 独立云数据库/存储/配置 |
-| `staging` | 双账号、审核、分享、真机验收 | 可重置测试数据 |
-| `production` | 小范围正式发布 | 最小权限、审计、备份/恢复 |
+| 环境          | 用途                         | 数据                      |
+| ------------- | ---------------------------- | ------------------------- |
+| `local`       | 纯函数/组件/模拟适配器测试   | 合成数据，不连接生产      |
+| `development` | 开发者联调                   | 独立云数据库/存储/配置    |
+| `staging`     | 双账号、审核、分享、真机验收 | 可重置测试数据            |
+| `production`  | 小范围正式发布               | 最小权限、审计、备份/恢复 |
 
 四套环境不得共用数据库、存储、微信配置、AI 密钥、审核/小程序码配置、日志或测试数据。仓库只提交 `.example`；AppSecret/AI Key 仅在云端受控环境变量；客户端包内无服务端密钥。
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 当前仓库树（M1.1）
+## 16. 当前仓库树（M1.2-A）
 
 ```text
 tap-name-card/
@@ -215,38 +222,48 @@ tap-name-card/
 │  ├─ config/ services/ state/
 │  ├─ domain/ templates/ utils/ constants/ assets/
 ├─ cloudfunctions/
-│  └─ README.md
+│  ├─ authEnsureUser/ accountGetMe/ accountAcceptPolicies/
+│  └─ shared/
+│     ├─ auth/ db/
+│     └─ contracts/（由根 shared/ 生成）
 ├─ shared/
 │  ├─ types/ errors/ constants/ validation/ logging/
 ├─ tests/
-│  └─ unit/
+│  ├─ unit/
+│  └─ integration/
 └─ docs/
    ├─ PRD.md DEVELOPMENT_PLAN.md MVP_SCOPE.md ARCHITECTURE.md
    ├─ DATA_MODEL.md API_SPEC.md UI_SPEC.md TEST_PLAN.md
    ├─ TASKS.md DECISIONS.md
 ```
 
-M1.1 只创建可导入、可检查、可测试的工程底座：
+M1.2-A 在 M1.1 工程底座上增加本地可验证的身份边界：
 
 - `pages/foundation` 明确标记为工程初始化页，不是正式 P02 首页或产品原型。
 - `components/page-state` 只演示 Loading、Empty、Error 和 Retry 最小接口；完整页面状态体系仍属于后续 Sprint。
-- `cloudfunctions/` 只有边界说明，没有正式函数、集合或 CloudBase 初始化。
+- `cloudfunctions/` 有本地处理器和内存事务适配器，但没有 CloudBase 入口、集合或部署。
 - 四个环境均有集中类型和安全空配置；真实环境 ID 不入库，未配置时页面显示开发提示。
-- 微信开发者工具配置采用 `miniprogramRoot`、`cloudfunctionRoot`、原生 `typescript` 编译插件和公开的 `touristappid` 基线，字段有效性仍需在开发者工具中验证。
-- 微信侧 TypeScript 不跨越 `miniprogramRoot` 导入：根 `shared/` 是唯一源，`miniprogram/shared/` 是提交到仓库的生成镜像；`shared:sync` 负责同步，三项静态质量命令通过 `shared:check` 阻止漂移。
+- 微信开发者工具配置采用 `miniprogramRoot`、`cloudfunctionRoot`、原生 `typescript`
+  编译插件和公开的 `touristappid` 基线；目录识别、TypeScript/WXML/WXSS 编译及页面注册
+  已通过 M1.1 与 M1.2-A 人工验收。
+- 微信侧和云函数侧都不跨运行时根目录导入：根 `shared/` 是契约唯一源，
+  `miniprogram/shared/` 与 `cloudfunctions/shared/contracts/` 是生成镜像；
+  `shared:sync` 负责同步，静态质量命令通过 `shared:check` 阻止漂移。
+- foundation 页面只提供手动身份探针；应用启动不调用 `authEnsureUser`，保证匿名浏览边界。
+- 本地内存事务只证明领域算法和故障路径，不等同于真实 CloudBase 事务已验证。
 
 ## 16.1 M1.1 工具链
 
-| 工具 | 已安装版本 | 用途 |
-|---|---:|---|
-| Node.js | 24.14.0 | 本地工具运行时 |
-| npm | 11.9.0 | 包管理与锁文件 |
-| TypeScript | 6.0.3 | 严格类型检查，不输出构建产物 |
-| ESLint | 10.7.0 | Flat Config 静态检查 |
-| typescript-eslint | 8.65.0 | TypeScript ESLint 规则 |
-| Prettier | 3.9.6 | TS/JSON/Markdown 工程文件格式 |
-| Vitest | 4.1.10 | M1.1 纯 TypeScript 单元测试 |
-| miniprogram-api-typings | 5.2.1 | 微信小程序全局类型 |
+| 工具                    | 已安装版本 | 用途                          |
+| ----------------------- | ---------: | ----------------------------- |
+| Node.js                 |    24.14.0 | 本地工具运行时                |
+| npm                     |     11.9.0 | 包管理与锁文件                |
+| TypeScript              |      6.0.3 | 严格类型检查，不输出构建产物  |
+| ESLint                  |     10.7.0 | Flat Config 静态检查          |
+| typescript-eslint       |     8.65.0 | TypeScript ESLint 规则        |
+| Prettier                |      3.9.6 | TS/JSON/Markdown 工程文件格式 |
+| Vitest                  |     4.1.10 | M1.1 纯 TypeScript 单元测试   |
+| miniprogram-api-typings |      5.2.1 | 微信小程序全局类型            |
 
 WXML/WXSS 未引入额外格式化插件，由代码约定和微信开发者工具编译验证。PowerShell 环境使用 `npm.cmd`，避免修改本机脚本执行策略。
 
@@ -259,14 +276,14 @@ WXML/WXSS 未引入额外格式化插件，由代码约定和微信开发者工�
 
 ## 18. 技术风险与 Spike
 
-| Spike | 时点 | 验证 | 阻断 |
-|---|---|---|---|
-| S-PLAT-01 云函数事务/条件更新/唯一语义 | M1 前 | 官方文档、并发写测试、失败注入 | 回赠与唯一键方案无法成立 |
-| S-PLAT-02 匿名路由与登录 | M1/M3 | 未登录真机打开、互动才登录 | 匿名被强制建号 |
-| S-PLAT-03 内容安全 | M2 | 文本/图片/链接范围、异步结果、错误定位 | 未审核内容可能公开 |
-| S-PLAT-04 分享与小程序码 | M3 | 参数长度、固定/当前入口、码有效性 | 无法打开正确名牌 |
-| S-IMG-01 Canvas | M2 提前、M3 完成 | 六模板、字体、Emoji、长文、iOS/Android、相册权限 | 严重错位或无法保存 |
-| S-DRAFT-01 草稿冲突 | M2 | 后台、断网、多设备、上传失败、恢复 | 静默丢内容 |
-| S-SOCIAL-01 原子回赠 | M4 | 并发、超时、重复、通知失败注入 | 半完成或重复相遇 |
-| S-PRIV-01 联系方式投影 | M4 | 越权、未选项、撤销、拉黑、注销 | 私密数据泄露 |
-| S-NFC-01 NFC 唤起 | P2 | 官方文档与真机 | 不影响 P0/MVP |
+| Spike                                  | 时点             | 验证                                             | 阻断                     |
+| -------------------------------------- | ---------------- | ------------------------------------------------ | ------------------------ |
+| S-PLAT-01 云函数事务/条件更新/唯一语义 | M1 前            | 官方文档、并发写测试、失败注入                   | 回赠与唯一键方案无法成立 |
+| S-PLAT-02 匿名路由与登录               | M1/M3            | 未登录真机打开、互动才登录                       | 匿名被强制建号           |
+| S-PLAT-03 内容安全                     | M2               | 文本/图片/链接范围、异步结果、错误定位           | 未审核内容可能公开       |
+| S-PLAT-04 分享与小程序码               | M3               | 参数长度、固定/当前入口、码有效性                | 无法打开正确名牌         |
+| S-IMG-01 Canvas                        | M2 提前、M3 完成 | 六模板、字体、Emoji、长文、iOS/Android、相册权限 | 严重错位或无法保存       |
+| S-DRAFT-01 草稿冲突                    | M2               | 后台、断网、多设备、上传失败、恢复               | 静默丢内容               |
+| S-SOCIAL-01 原子回赠                   | M4               | 并发、超时、重复、通知失败注入                   | 半完成或重复相遇         |
+| S-PRIV-01 联系方式投影                 | M4               | 越权、未选项、撤销、拉黑、注销                   | 私密数据泄露             |
+| S-NFC-01 NFC 唤起                      | P2               | 官方文档与真机                                   | 不影响 P0/MVP            |

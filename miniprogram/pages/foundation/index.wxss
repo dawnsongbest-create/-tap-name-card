@@ -84,3 +84,22 @@
   font-size: 26rpx;
   line-height: 1.6;
 }
+
+.foundation__auth-panel {
+  padding: 12rpx 28rpx 28rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+}
+
+.foundation__request-id {
+  overflow-wrap: anywhere;
+  padding-top: 20rpx;
+  color: #6e6e73;
+  font-size: 22rpx;
+}
+
+.foundation__actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}

@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M0 v1.1（第二轮 Review）｜日期：2026-07-24｜状态：`IN_REVIEW`  
+> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -86,7 +86,8 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 
 | 域 | 必测 |
 |---|---|
-| 身份 | 并发 `authEnsureUser` 只有一条 user；匿名 P11 不调用；OpenID 不返回 |
+| 身份 | 50 路并发 `authEnsureUser` 只有一条 user/mapping；HMAC 环境隔离；匿名 P11/启动不调用；OpenID/密钥不返回；三次冲突耗尽安全失败 |
+| 协议 | 两版本/两时间原子写；同版本重放不改时间；混合/旧版本拒绝；RESTRICTED 可确认但不解除；DELETED 拒绝 |
 | Cards | C 不能读/改 A 草稿；上限并发；draft revision 冲突；公开 Token 不可枚举；隐藏/删除立即失效 |
 | 审核 | 首发拒绝不公开；新版审核时旧版继续；通过时新快照原子切换；失败定位类别 |
 | 收藏 | add 重放/并发一条；remove/恢复；无 notification/greeting/encounter 写入 |
@@ -119,7 +120,9 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 
 ### 7.1 重复/并发
 
-- 同 operationId 重放、不同 operationId 同时点击、客户端超时后重试、两个设备并发。
+- 有 operationId 的业务接口测试同 ID 重放和不同 ID 并发；M1.2 三个身份接口不带
+  operationId，分别依靠 identityKey、只读语义和同版本状态幂等。所有接口还测试客户端
+  超时后重试和两个设备并发。
 - 创建用户/卡、草稿、当前卡、收藏、Greeting、回赠、联系方式、拉黑、举报、注销。
 - 断言唯一业务键文档/占位键、最终状态、通知数、快照数和可恢复性。
 
@@ -134,10 +137,28 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 
 ### 7.3 其他原子边界
 
+- 首次建号：user 与 `identity_mappings/{identityKey}` 同时存在或都不存在；写冲突最多
+  三次退避，耗尽 `SERVICE_UNAVAILABLE`，不允许普通先查后写。
+- 协议确认：terms/privacy 的版本与时间同时生效或都不生效；同版本重放不更新时间。
 - 设置当前卡并发：`users.currentCardId` 权威且至多一张。
 - 审核通过失败：旧快照或新快照之一完整公开，不出现 pending 公开。
 - 接受联系方式失败：状态和双方选择同时生效或都不生效。
 - 拉黑/注销部分清理失败：block/DELETED 策略先阻止敏感读，后台可幂等续跑。
+
+### 7.4 M1.2-A 本地与 M1.2-B 云端边界
+
+M1.2-A 已可由 Node/Vitest 验证：输入白名单、HMAC 算法与环境隔离、响应字段投影、
+CurrentUserView 状态限制、内存原子事务、50 路并发、三次冲突退避、政策原子/幂等、
+RESTRICTED/DELETED/缺失/一致性错误、客户端状态映射和未配置云环境降级。
+
+以下必须标记 `NEEDS_VALIDATION`，不能由内存实现替代：
+
+- CloudBase development 环境和三个真实云函数入口。
+- 微信可信调用上下文中 OpenID 的官方获取方式与失败行为。
+- 服务端环境变量注入、四环境密钥隔离和日志/控制台脱敏。
+- `users` 与 `identity_mappings` 的真实跨文档事务、写冲突错误识别与三次退避。
+- 数据库规则拒绝客户端直读/直写、真实索引/配额/冷启动行为。
+- 微信开发者工具编译、双账号并发、iPhone/Android 身份冒烟和未配置环境降级复验。
 
 ## 8. 页面状态测试
 

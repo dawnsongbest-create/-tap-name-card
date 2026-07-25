@@ -1,10 +1,11 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.1 v1.1｜日期：2026-07-25｜状态：`DONE`
+> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01 已完成本地检查和微信开发者工具人工复验，状态为 `DONE`；M1-02 及以后均未开始。
+> 当前规则：M0 已人工通过；M1-01 为 `DONE`；M1-02 已完成 M1.2-A 本地实现并进入
+> `IN_REVIEW`，只有 development 云端验收通过后才能为 `DONE`；M1-03 及以后未开始。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -57,10 +58,17 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 
 - 元数据：M1｜M1.2｜P0｜依赖 M1-01。
 - 范围：四环境映射、可信身份、协议、账号状态、匿名/登录分离；不做名牌业务。
-- 目录：`services/auth`、`cloudfunctions/authEnsureUser/accountGetMe`、shared policies；集合 users；页面 P01/P25 基础。完整 `accountDelete` 与 P23 注销在 M4-05 实现，避免 M1 对尚不存在的业务集合做伪完整清理。
-- 验收：首次幂等、匿名不建号、OpenID 不返回、受限可识别。
-- 测试：身份集成/并发；匿名深链手工；iPhone/Android 登录冒烟。
-- 风险：匿名路由、环境误连。状态：`NOT_STARTED`。
+- 目录：`miniprogram/services/auth.ts`、`miniprogram/state/auth.ts`、三个身份处理器、
+  `cloudfunctions/shared/auth|db`、根 shared 契约及两个运行时镜像；计划集合
+  `users/identity_mappings`，M1.2-A 未建库。完整 `accountDelete` 与 P23 注销在 M4-05
+  实现。
+- M1.2-A 已完成：HMAC identityKey、CurrentUserView 白名单、内存原子事务、最多三次
+  冲突退避、独立政策确认、客户端状态/手动探针；应用启动和匿名浏览不建号。
+- 本地验收：首次幂等、50 路并发仅一条 user/mapping、OpenID/密钥不返回、
+  ACTIVE/RESTRICTED/DELETED 映射、政策原子/幂等和错误码自动测试。
+- M1.2-B `NEEDS_VALIDATION`：真实 development 环境、可信微信上下文、环境变量、
+  CloudBase 事务/规则/部署、开发者工具和 iPhone/Android 双账号冒烟。
+- 风险：真实 CloudBase 冲突语义、权限规则、匿名路由、环境误连。状态：`IN_REVIEW`。
 
 ### M1-03 共享基础设施
 

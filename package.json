@@ -6,9 +6,9 @@
   "scripts": {
     "shared:sync": "node tools/sync-miniprogram-shared.mjs",
     "shared:check": "node tools/sync-miniprogram-shared.mjs --check",
-    "format": "prettier --write README.md cloudfunctions/README.md \"*.{json,mjs,ts}\" \"tools/**/*.mjs\" \"miniprogram/**/*.{ts,json}\" \"shared/**/*.ts\" \"tests/**/*.ts\" && prettier --write project.private.config.json.example --parser json && npm run shared:sync",
-    "format:check": "npm run shared:check && prettier --check README.md cloudfunctions/README.md \"*.{json,mjs,ts}\" \"tools/**/*.mjs\" \"miniprogram/**/*.{ts,json}\" \"shared/**/*.ts\" \"tests/**/*.ts\" && prettier --check project.private.config.json.example --parser json",
-    "lint": "npm run shared:check && eslint \"tools/**/*.mjs\" \"miniprogram/**/*.ts\" \"shared/**/*.ts\" \"tests/**/*.ts\" vitest.config.ts",
+    "format": "prettier --write README.md \"cloudfunctions/**/*.{ts,json,md}\" \"*.{json,mjs,ts}\" \"tools/**/*.mjs\" \"miniprogram/**/*.{ts,json}\" \"shared/**/*.ts\" \"tests/**/*.ts\" && prettier --write project.private.config.json.example --parser json && npm run shared:sync",
+    "format:check": "npm run shared:check && prettier --check README.md \"cloudfunctions/**/*.{ts,json,md}\" \"*.{json,mjs,ts}\" \"tools/**/*.mjs\" \"miniprogram/**/*.{ts,json}\" \"shared/**/*.ts\" \"tests/**/*.ts\" && prettier --check project.private.config.json.example --parser json",
+    "lint": "npm run shared:check && eslint \"cloudfunctions/**/*.ts\" \"tools/**/*.mjs\" \"miniprogram/**/*.ts\" \"shared/**/*.ts\" \"tests/**/*.ts\" vitest.config.ts",
     "typecheck": "npm run shared:check && tsc --noEmit",
     "test": "vitest run"
   },

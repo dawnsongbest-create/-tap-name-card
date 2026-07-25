@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 数据模型
 
-> 版本：M0 v1.1（第二轮 Review）｜日期：2026-07-24｜状态：`IN_REVIEW`  
+> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 > 本文为逻辑模型；CloudBase 实际索引、事务和唯一能力须在 M1/M4 依据官方文档及并发测试确认。  
 > 关联：[架构](./ARCHITECTURE.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
@@ -10,7 +10,8 @@
 - 时间由服务端生成，存 UTC：`createdAt`、`updatedAt`、`deletedAt`、`resolvedAt` 等。
 - 客户端不得直写核心集合；公开读取和敏感读取均通过云函数字段投影。
 - 逻辑删除立即使当前入口失效；不可变快照和必要安全审计按留存策略保留。
-- 写操作携带 `operationId/clientMutationId`；确定性业务键统一做规范化、分隔和哈希，日志仅记摘要。
+- 业务写操作按接口契约携带 `operationId/clientMutationId`；M1.2 的三个身份接口不携带
+  `operationId`。确定性业务键统一做规范化、分隔和哈希，日志仅记摘要。
 - P0 集合：除 `ai_usage`（P1）和 `nfc_devices`（P2）外全部；`encounter_events` P0 只存首次系统事件。
 
 ## 2. 核心键与唯一语义
@@ -24,6 +25,7 @@
 | `blockKey` | `hash(blockerId:blockedId)` | 同方向一条拉黑关系 |
 | 联系申请 `requestKey` | `hash(encounterId:requesterId:activeGeneration)` | 同一发起方在一轮内至多一个有效申请 |
 | 当前名牌 | owner 范围的 `currentCardId` + cards `isCurrent` 镜像 | 每用户至多一张当前名牌 |
+| `identityKey` | 服务端 HMAC-SHA256（环境密钥，命名空间 `wechat-openid:v1:`） | 同一环境中一个微信 OpenID 只映射一个内部用户；跨环境不可关联 |
 
 CloudBase 若无严格唯一约束：用键本身作为文档 `_id` 或建立 `unique_keys/{kind:key}` 占位文档；事务内“创建占位/条件更新 → 复查业务文档 → 写入”，冲突方读取胜者；若无跨集合事务，采用可恢复操作记录与状态条件更新，任何公开/敏感读只认最终状态。不得仅靠“先查再写”。
 
@@ -32,12 +34,27 @@ CloudBase 若无严格唯一约束：用键本身作为文档 `_id` 或建立 `u
 ### 3.1 `users`（P0）
 
 - 目的/关系：微信身份对应内部账号；一对多 cards/contacts，一对一当前名牌引用。
-- 字段：`_id:string*`、`openId:string* [server/private]`、`status:ACTIVE|RESTRICTED|DELETED*`、`currentCardId?:string`、`acceptedTermsVersion?:string`、`createdAt:Date* [server]`、`updatedAt:Date* [server]`、`deletedAt?:Date [server]`、`deletionVersion?:number`。
-- 索引/唯一：`openId` 唯一语义；`status+updatedAt` 管理查询；`currentCardId` 普通索引。
+- 字段：`_id:string*`、`openId:string* [server/private]`、
+  `status:ACTIVE|RESTRICTED|DELETED*`、`currentCardId?:string`、
+  `acceptedTermsVersion?:string`、`acceptedPrivacyVersion?:string`、
+  `termsAcceptedAt?:Date [server]`、`privacyAcceptedAt?:Date [server]`、
+  `createdAt:Date* [server]`、`updatedAt:Date* [server]`、`deletedAt?:Date [server]`。
+- 索引/唯一：身份唯一语义由 `identity_mappings` 的确定性文档 ID 承担；
+  `status+updatedAt` 管理查询；`currentCardId` 普通索引。
 - 所有权/可见：本人可经 `accountGetMe` 看状态和当前名牌 ID；`openId` 永不返回；他人只在公开快照中看到用户主动发布内容。
 - 删除/保留：注销置 `DELETED`，清除公开映射和联系方式访问；安全审计/举报按规则留存，历史相遇只保留注销快照。
-- 典型查询：按可信 `openId` 获取/幂等创建；读取本人；注销。
-- 事务/幂等：`authEnsureUser` 以 `openId` 唯一语义；`accountDelete` 以 `userId+deletionVersion` 可恢复执行。
+- 典型查询：由可信 OpenID 派生 `identityKey` 后获取/幂等创建；读取本人；注销。
+- 事务/幂等：`authEnsureUser` 依靠确定性 `identityKey`；注销的恢复字段和操作键留到 M4 决定，
+  M1.2 不包含 `deletionVersion`。
+
+### 3.1a `identity_mappings`（P0，M1.2）
+
+- 文档路径：`identity_mappings/{identityKey}`；`identityKey` 是文档 ID，不是额外业务字段。
+- 保存字段：`userId:string*`、`provider:'WECHAT_MINIPROGRAM'*`、`createdAt:Date* [server]`。
+- 禁止字段：原始 OpenID、HMAC 密钥、客户端可控身份、政策或用户资料。
+- 权限：只允许服务端读取/写入，客户端不得直读或直写。
+- 原子性：首次创建 user 与 mapping 必须在同一服务端事务；写冲突后有限退避，
+  最多三次，耗尽返回 `SERVICE_UNAVAILABLE`，不得退化为普通先查后写。
 
 ### 3.2 `cards`（P0）
 
@@ -202,12 +219,14 @@ ACCEPTED -> REVOKED
 
 ## 5. 事务边界
 
-1. 审核通过：验证冻结内容 → 创建不可变快照 → 切换 `publishedSnapshotId`/状态 → 清 pending → 审核通知。
-2. 设置当前名牌：校验 owner/PUBLISHED → 清旧 `isCurrent` → 设新 → 更新 `users.currentCardId`。
-3. 回赠：锁定 `PENDING` greeting → 验证回赠卡 → 创建回赠快照引用 → `RETURNED` → upsert `pairKey` encounter → 首次 event → 去重通知。
-4. 接受联系方式：锁定 PENDING → 验证 receiver 及双方联系人 → 保存 receiver IDs → ACCEPTED → 去重通知。
-5. 拉黑：写 block → 关闭待处理 greeting/contact → ACCEPTED contact 变 REVOKED → encounter BLOCKED/隐藏 → 禁止后续敏感读取；解除时只有双方均无 block 才恢复 encounter ACTIVE，不恢复旧请求/共享。
-6. 注销：先将 user DELETED、Token/联系读取失效，再幂等清理个人活动数据；任何失败可从 deletionVersion 续跑。
+1. 首次身份：可信 OpenID 派生 identityKey → 同一事务创建 user 与 mapping → 冲突后读胜者或有限退避。
+2. 协议确认：同时写入两项版本和两个接受时间；相同版本重放不改变时间。
+3. 审核通过：验证冻结内容 → 创建不可变快照 → 切换 `publishedSnapshotId`/状态 → 清 pending → 审核通知。
+4. 设置当前名牌：校验 owner/PUBLISHED → 清旧 `isCurrent` → 设新 → 更新 `users.currentCardId`。
+5. 回赠：锁定 `PENDING` greeting → 验证回赠卡 → 创建回赠快照引用 → `RETURNED` → upsert `pairKey` encounter → 首次 event → 去重通知。
+6. 接受联系方式：锁定 PENDING → 验证 receiver 及双方联系人 → 保存 receiver IDs → ACCEPTED → 去重通知。
+7. 拉黑：写 block → 关闭待处理 greeting/contact → ACCEPTED contact 变 REVOKED → encounter BLOCKED/隐藏 → 禁止后续敏感读取；解除时只有双方均无 block 才恢复 encounter ACTIVE，不恢复旧请求/共享。
+8. 注销：先将 user DELETED、Token/联系读取失效，再幂等清理个人活动数据；恢复机制在 M4 设计。
 
 ## 6. 权限矩阵摘要
 

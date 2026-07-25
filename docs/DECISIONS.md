@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M1.1 v1.0｜日期：2026-07-24｜状态：`IN_REVIEW`
+> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -204,12 +204,17 @@
 
 ## ADR-023 M1.1 原生小程序目录与项目配置
 
-- 状态：`NEEDS_VALIDATION`。
-- 背景：需要微信开发者工具可导入的原生 TypeScript 工程，同时当前环境未检测到开发者工具，微信官方文档站点访问超时。
+- 状态：`ACCEPTED`。
+- 背景：需要微信开发者工具可导入的原生 TypeScript 工程；最初实现时自动化环境无法代替
+  开发者工具编译验证。
 - 决策/原因：采用仓库根目录项目配置、`miniprogram/` 源目录、原生 `typescript` 编译插件、`pages/foundation` 工程初始化页、`components/page-state` 最小组件和 `touristappid` 公共导入基线；不创建正式首页。
 - 替代：使用真实 AppID、引入 Taro/uni-app、提前创建产品页面。
-- 后果：代码、类型和测试可在本地验证；`project.config.json` 的字段识别、TypeScript 编译和基础库兼容必须由安装了微信开发者工具的人工验收确认。
-- 风险/复审：若当前开发者工具要求不同字段，只调整工程配置并更新本 ADR，不改变 PRD 或进入 M1.2。
+- 验证：M1.1 人工复验已确认仓库根目录导入、`miniprogram/` 与 `cloudfunctions/` 识别、
+  TypeScript/WXML/WXSS 编译、foundation 页面注册和四种基础状态；M1.2-A 人工验证再次通过，
+  Console 无红色代码错误。
+- 后果：当前工程配置基线已通过实际开发者工具验证；基础库提示不视为代码错误。
+- 风险/复审：开发者工具或基础库版本变化后需重新验证；若要求不同字段，只调整工程配置并
+  更新本 ADR，不改变 PRD 或进入后续业务范围。
 
 ## ADR-024 M1.1 CloudBase 配置边界
 
@@ -228,3 +233,46 @@
 - 替代：扩大 `miniprogramRoot` 到仓库根目录；让微信代码继续跨根引用；手工维护两份共享代码；引入 Taro/uni-app 或额外打包框架。
 - 后果：微信编译器只看到 `miniprogram/` 内依赖，Node/Vitest 仍可直接测试根 `shared/`；镜像是生成物，不是第二个业务事实来源。
 - 风险/复审：任何根 `shared/` 修改必须运行 `npm.cmd run shared:sync`；遗漏会由质量命令失败阻止。M1.2 设计云函数共享方式时需要复用“唯一源 + 明确生成边界”原则，不得让运行时目录互相跨根引用。
+
+## ADR-026 M1.2 身份使用环境隔离 HMAC 映射
+
+- 状态：`ACCEPTED`。
+- 背景：客户端不得提供可信身份，OpenID 不得返回客户端；同一 OpenID 并发首次建号必须唯一，
+  又不能把原始 OpenID 放进确定性映射文档。
+- 决策/原因：服务端从可信微信上下文取得 OpenID，以各环境独立密钥计算
+  `HMAC-SHA256(secret,"wechat-openid:v1:"+openId)`。使用
+  `identity_mappings/{identityKey}`，文档只保存 `userId/provider/createdAt`；user 与 mapping
+  必须在同一服务端事务创建。捕获写冲突后最多三次退避并读取事务胜者，耗尽返回
+  `SERVICE_UNAVAILABLE`，不得退化为普通先查后写。
+- 替代：客户端传 OpenID；无密钥哈希；只查 users 再写；新增操作重放集合。
+- 后果：同环境有确定性幂等键，跨环境不可关联；密钥轮换会影响映射解析，需要在云端接入时
+  单独设计运维流程，M1.2-A 不实现轮换。
+- 风险/复审：真实 CloudBase 跨文档事务、冲突错误和可信上下文仍为
+  `NEEDS_VALIDATION`；development 验收后更新验证记录。
+
+## ADR-027 身份接口与政策确认契约
+
+- 状态：`ACCEPTED`。
+- 背景：建号、本人读取和政策确认的幂等来源不同；DELETED 不应作为可用用户视图返回。
+- 决策/原因：`authEnsureUser`、`accountGetMe`、`accountAcceptPolicies` 均不使用
+  `operationId`，`requestId` 只追踪。三者分别依靠 identityKey、只读语义和同版本状态幂等。
+  terms/privacy 必须一次同时确认，独立接口原子写两个版本和两个时间；RESTRICTED 可确认但
+  不解除限制。`CurrentUserView.status` 仅 `ACTIVE|RESTRICTED`，DELETED 返回
+  `ACCOUNT_DELETED`；客户端映射成本地终止/不可用状态。过期政策阻止后续关键业务写，
+  但允许 getMe、阅读和重新确认。
+- 替代：建号时捆绑协议；每个接口建设 operation replay 集合；返回 DELETED 视图。
+- 后果：接口更小、语义独立；未来关键写操作必须统一执行政策版本守卫。
+- 风险/复审：政策正文承载和当前版本的云端配置方式需在正式接入时验证，不在客户端写死。
+
+## ADR-028 M1.2 分为本地实现与 development 云端验收
+
+- 状态：`ACCEPTED`。
+- 背景：当前没有真实 CloudBase development 配置，不能把内存行为冒充平台能力。
+- 决策/原因：M1.2-A 实现共享契约、领域服务、HMAC、内存事务、处理器、客户端状态和自动
+  测试；不提供可部署入口、不建集合。根 `shared/` 继续作为契约唯一源，并生成
+  `miniprogram/shared/` 与 `cloudfunctions/shared/contracts/` 两个运行时镜像。M1.2-A
+  完成后 M1-02 保持 `IN_REVIEW`；只有 M1.2-B 在 development 验证可信身份、环境变量、
+  真实事务/规则、部署与双平台冒烟后才可 `DONE`。
+- 替代：等待云环境后一次实现；本地伪造 CloudBase SDK/配置并标完成。
+- 后果：本地算法可审查且平台缺口可见；云端适配仍是明确门禁。
+- 风险/复审：真实 SDK 入口和事务限制必须基于届时官方文档实现，不能照搬内存适配器细节。

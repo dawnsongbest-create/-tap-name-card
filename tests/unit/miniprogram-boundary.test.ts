@@ -80,4 +80,20 @@ describe('WeChat mini-program compilation boundary', () => {
       expect(pageSource).toMatch(/\bPage\s*\(/);
     }
   });
+
+  it('keeps server-only identity records out of the client contract mirror', () => {
+    const userContract = readFileSync(resolve(MINIPROGRAM_ROOT, 'shared/types/user.ts'), 'utf8');
+
+    expect(userContract).not.toContain('openId');
+    expect(userContract).not.toContain('UserRecord');
+    expect(userContract).not.toContain('IdentityMapping');
+    expect(userContract).not.toContain('DELETED');
+  });
+
+  it('does not create an account during application launch', () => {
+    const appSource = readFileSync(resolve(MINIPROGRAM_ROOT, 'app.ts'), 'utf8');
+
+    expect(appSource).not.toContain('authEnsureUser');
+    expect(appSource).not.toContain('ensureUser');
+  });
 });

@@ -1,6 +1,6 @@
 # 「碰一下名牌」云函数 API 规格
 
-> 版本：M0 v1.1（第二轮 Review）｜日期：2026-07-24｜状态：`IN_REVIEW`  
+> 版本：M1.2-A v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
 > 本文定义逻辑契约，不声明任何未验证的微信/CloudBase API 名称。  
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[UI](./UI_SPEC.md)｜[测试](./TEST_PLAN.md)
 
@@ -8,7 +8,8 @@
 
 ```ts
 type ErrorCode =
-  | 'AUTH_REQUIRED' | 'ACCOUNT_RESTRICTED' | 'INVALID_INPUT'
+  | 'AUTH_REQUIRED' | 'ACCOUNT_RESTRICTED' | 'ACCOUNT_DELETED'
+  | 'USER_NOT_FOUND' | 'POLICY_VERSION_UNSUPPORTED' | 'INVALID_INPUT'
   | 'REQUIRED_FIELD_MISSING' | 'RESOURCE_NOT_FOUND' | 'FORBIDDEN'
   | 'CARD_REQUIRED' | 'CARD_NOT_PUBLISHED' | 'CARD_UNAVAILABLE'
   | 'CONTENT_REJECTED' | 'DUPLICATE_ACTION' | 'GREETING_ALREADY_SENT'
@@ -31,6 +32,11 @@ interface Page<T> { items: T[]; nextCursor?: string }
 interface Ack { completed: true; replayed?: boolean }
 interface Id { id: string }
 interface CardRef { cardId: string; snapshotId: string }
+interface CurrentUserView {
+  userId: string; status: 'ACTIVE'|'RESTRICTED'; currentCardId?: string;
+  acceptedTermsVersion?: string; acceptedPrivacyVersion?: string;
+  needsPolicyAcceptance: boolean; createdAt: string;
+}
 interface PublicCardView {
   snapshotId: string; type: 'SOCIAL' | 'RESUME'; templateId: string;
   templateVersion: number; content: PublicCardContent; privacy: PublicCardPrivacy;
@@ -45,7 +51,7 @@ interface ContactSummary { contactId: string; type: ContactType; label: string; 
 interface SharedContact extends ContactSummary { value?: string; fileUrl?: string }
 ```
 
-所有输入先做运行时校验；所有时间、身份和状态由服务端决定。登录接口从可信调用上下文取身份，不接受客户端传 `ownerId/openId`。默认日志字段：`requestId,function,environment,actorId,resourceIds,operationIdHash,fromState,toState,resultCode,durationMs`；不得记录 OpenID、联系人明文、二维码、密钥、完整 AI 输入或内部堆栈。
+所有输入先做运行时校验；所有时间、身份和状态由服务端决定。登录接口从可信调用上下文取身份，不接受客户端传 `ownerId/openId`。默认日志字段：`requestId,function,environment,actorId,resourceIds,fromState,toState,resultCode,durationMs`；仅有 operationId 的业务接口可额外记录其摘要。不得记录 OpenID、联系人明文、二维码、密钥、完整 AI 输入或内部堆栈。
 
 频率使用服务端配置。表中的“常规”表示仍有全局防刷；“严格”表示按用户、目标和时间窗限制。所有 P0 写操作至少测试：成功、鉴权/所有权、非法输入、状态前置、拉黑、重复/并发、存储失败、响应字段过滤。客户端失败统一映射安全文案；未知写结果先查状态再重试。
 
@@ -53,9 +59,10 @@ interface SharedContact extends ContactSummary { value?: string; fileUrl?: strin
 
 | 函数（优先级） | 目的与 TypeScript 契约 | 登录/权限/校验 | 数据、状态、事务、幂等 | 频率、错误、测试与客户端失败 |
 |---|---|---|---|---|
-| `authEnsureUser` P0 | `input:{acceptedTermsVersion:string,meta:MutationMeta}` → `{userId:string,status:UserStatus,currentCardId?:string}`；首次互动建号 | 需要可信微信身份；协议版本有效；匿名打开 P11 不调用 | R/W users；ACTIVE 初建；`openId` 唯一语义事务/upsert，operationId 重放 | 严格；`INVALID_INPUT/ACCOUNT_RESTRICTED/SERVICE_UNAVAILABLE`；并发首次登录只一条；失败保持匿名/提示重试 |
-| `accountGetMe` P0 | `input:{}` → `{userId,status,currentCardId?,acceptedTermsVersion?}` | 登录；仅本人 | R users；无状态变化 | 常规；`AUTH_REQUIRED/RESOURCE_NOT_FOUND`；验证无 openId；失败回登录/重试 |
-| `accountDelete` P0 | `input:{confirm:true,meta}` → `Ack` | 登录、本人、二次确认 | W users/cards/contacts/blocks；先 DELETED 和公开/私密入口失效，后续清理可恢复；`userId+deletionVersion` | 严格；`INVALID_INPUT/DUPLICATE_ACTION/SERVICE_UNAVAILABLE`；故障注入与重放；未知结果调用 accountGetMe/公共 Token 验证 |
+| `authEnsureUser` P0 | `input:{}` → `CurrentUserView`；首次主动互动时建号 | 需要可信微信身份；不接受 openId/userId；匿名打开 P11 或应用启动不调用 | R/W `users/identity_mappings`；identityKey 保证幂等；同一事务创建；冲突最多三次退避；无 operationId | `AUTH_REQUIRED/ACCOUNT_DELETED/INVALID_INPUT/SERVICE_UNAVAILABLE`；50 路并发本地只有一条；失败保持匿名/提示重试 |
+| `accountGetMe` P0 | `input:{}` → `CurrentUserView` | 登录；仅本人；不接受身份字段 | R users；只读；无 operationId | `AUTH_REQUIRED/USER_NOT_FOUND/ACCOUNT_DELETED/SERVICE_UNAVAILABLE`；响应无 openId；失败回匿名/不可用 |
+| `accountAcceptPolicies` P0 | `input:{acceptedTermsVersion:string,acceptedPrivacyVersion:string}` → `{user:CurrentUserView,replayed:boolean}` | 登录；两项必须一次同时确认且必须等于当前服务端版本；RESTRICTED 可调用 | W users；两版本和两时间原子写；相同版本状态幂等；不解除 RESTRICTED；无 operationId | `AUTH_REQUIRED/USER_NOT_FOUND/ACCOUNT_DELETED/POLICY_VERSION_UNSUPPORTED/INVALID_INPUT/SERVICE_UNAVAILABLE`；版本过期后关键业务写阻止，但 getMe/阅读/确认仍可用 |
+| `accountDelete` P0（M4） | `input:{confirm:true,meta}` → `Ack` | 登录、本人、二次确认 | W users/cards/contacts/blocks；先 DELETED 和公开/私密入口失效，后续清理可恢复；恢复/幂等字段在 M4 决定 | 严格；`INVALID_INPUT/DUPLICATE_ACTION/SERVICE_UNAVAILABLE`；故障注入与重放；未知结果调用 accountGetMe/公共 Token 验证 |
 | `templateList` P0 | `input:{cardType?:CardType}` → `{templates:TemplateSummary[]}` | 匿名可读；只返回启用的仓库配置 | R 版本化模板注册；无数据库写 | 可缓存；`INVALID_INPUT/SERVICE_UNAVAILABLE`；六模板与类型过滤；失败用安全内置配置/重试 |
 | `templateGet` P0 | `input:{templateId:string,version?:number}` → `{template:CardTemplate}` | 匿名可读；ID/版本白名单 | R 模板注册；配置错误安全回退并记录 | 可缓存；`RESOURCE_NOT_FOUND/SERVICE_UNAVAILABLE`；版本兼容；失败返回列表 |
 

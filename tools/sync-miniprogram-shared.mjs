@@ -4,14 +4,21 @@ import { fileURLToPath } from 'node:url';
 
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE_ROOT = resolve(REPOSITORY_ROOT, 'shared');
-const TARGET_ROOT = resolve(REPOSITORY_ROOT, 'miniprogram/shared');
+const TARGET_ROOTS = [
+  resolve(REPOSITORY_ROOT, 'miniprogram/shared'),
+  resolve(REPOSITORY_ROOT, 'cloudfunctions/shared/contracts'),
+];
 const CHECK_ONLY = process.argv.includes('--check');
 
-function assertTargetBoundary() {
-  const targetRelativePath = relative(REPOSITORY_ROOT, TARGET_ROOT).replaceAll('\\', '/');
+function assertTargetBoundaries() {
+  const expectedTargets = new Set(['miniprogram/shared', 'cloudfunctions/shared/contracts']);
 
-  if (targetRelativePath !== 'miniprogram/shared') {
-    throw new Error(`Refusing to access unexpected generated target: ${TARGET_ROOT}`);
+  for (const targetRoot of TARGET_ROOTS) {
+    const targetRelativePath = relative(REPOSITORY_ROOT, targetRoot).replaceAll('\\', '/');
+
+    if (!expectedTargets.has(targetRelativePath)) {
+      throw new Error(`Refusing to access unexpected generated target: ${targetRoot}`);
+    }
   }
 }
 
@@ -50,8 +57,8 @@ function normalizeLineEndings(content) {
   return content.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
 }
 
-async function checkMirror(sourceFiles) {
-  const targetFiles = await listTypeScriptFiles(TARGET_ROOT);
+async function checkMirror(sourceFiles, targetRoot) {
+  const targetFiles = await listTypeScriptFiles(targetRoot);
   const mismatches = [];
 
   if (JSON.stringify(sourceFiles) !== JSON.stringify(targetFiles)) {
@@ -66,7 +73,7 @@ async function checkMirror(sourceFiles) {
 
     try {
       targetContent = normalizeLineEndings(
-        await readFile(resolve(TARGET_ROOT, relativePath), 'utf8'),
+        await readFile(resolve(targetRoot, relativePath), 'utf8'),
       );
     } catch {
       mismatches.push(relativePath);
@@ -80,20 +87,27 @@ async function checkMirror(sourceFiles) {
 
   if (mismatches.length > 0) {
     throw new Error(
-      `miniprogram/shared is stale (${mismatches.join(', ')}). Run npm run shared:sync.`,
+      `${relative(REPOSITORY_ROOT, targetRoot)} is stale (${mismatches.join(
+        ', ',
+      )}). Run npm run shared:sync.`,
     );
   }
 
-  console.info(`Verified ${sourceFiles.length} mirrored shared TypeScript files.`);
+  console.info(
+    `Verified ${sourceFiles.length} mirrored shared TypeScript files in ${relative(
+      REPOSITORY_ROOT,
+      targetRoot,
+    )}.`,
+  );
 }
 
-async function syncMirror(sourceFiles) {
-  const targetFiles = await listTypeScriptFiles(TARGET_ROOT);
+async function syncMirror(sourceFiles, targetRoot) {
+  const targetFiles = await listTypeScriptFiles(targetRoot);
   const sourceFileSet = new Set(sourceFiles);
 
   for (const relativePath of sourceFiles) {
     const sourcePath = resolve(SOURCE_ROOT, relativePath);
-    const targetPath = resolve(TARGET_ROOT, relativePath);
+    const targetPath = resolve(targetRoot, relativePath);
 
     await mkdir(dirname(targetPath), { recursive: true });
     await writeFile(targetPath, normalizeLineEndings(await readFile(sourcePath, 'utf8')), 'utf8');
@@ -101,14 +115,19 @@ async function syncMirror(sourceFiles) {
 
   for (const relativePath of targetFiles) {
     if (!sourceFileSet.has(relativePath)) {
-      await unlink(resolve(TARGET_ROOT, relativePath));
+      await unlink(resolve(targetRoot, relativePath));
     }
   }
 
-  console.info(`Synchronized ${sourceFiles.length} shared TypeScript files.`);
+  console.info(
+    `Synchronized ${sourceFiles.length} shared TypeScript files to ${relative(
+      REPOSITORY_ROOT,
+      targetRoot,
+    )}.`,
+  );
 }
 
-assertTargetBoundary();
+assertTargetBoundaries();
 
 const sourceFiles = await listTypeScriptFiles(SOURCE_ROOT);
 
@@ -117,7 +136,11 @@ if (sourceFiles.length === 0) {
 }
 
 if (CHECK_ONLY) {
-  await checkMirror(sourceFiles);
+  for (const targetRoot of TARGET_ROOTS) {
+    await checkMirror(sourceFiles, targetRoot);
+  }
 } else {
-  await syncMirror(sourceFiles);
+  for (const targetRoot of TARGET_ROOTS) {
+    await syncMirror(sourceFiles, targetRoot);
+  }
 }

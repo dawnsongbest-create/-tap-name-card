@@ -1,9 +1,10 @@
 <view class="foundation">
   <view class="foundation__header">
-    <text class="foundation__eyebrow">M1.1 FOUNDATION</text>
-    <view class="foundation__title">工程初始化页</view>
+    <text class="foundation__eyebrow">M1.2-A LOCAL IDENTITY</text>
+    <view class="foundation__title">本地身份基础页</view>
     <view class="foundation__description">
-      这个页面只验证微信原生小程序、TypeScript、基础组件和环境配置能够持续开发，不是正式首页或产品原型。
+      本页用于验证原生小程序边界、页面状态和身份客户端适配器，不是正式首页或登录页。
+      M1.2-A 不会自动创建账号，也不会连接或部署真实 CloudBase。
     </view>
   </view>
 
@@ -29,7 +30,23 @@
     <view class="foundation__retry-count">重试示例触发次数：{{retryCount}}</view>
   </view>
 
+  <view class="foundation__section">
+    <view class="foundation__section-title">M1.2-A 手动身份探针</view>
+    <view class="foundation__auth-panel">
+      <view class="foundation__meta-row">
+        <text>客户端状态</text>
+        <text class="foundation__meta-value">{{authState}}</text>
+      </view>
+      <view class="foundation__request-id">requestId：{{authRequestId}}</view>
+      <view class="foundation__actions">
+        <button size="mini" bindtap="onEnsureUser">调用 ensureUser</button>
+        <button size="mini" bindtap="onGetMe">调用 getMe</button>
+      </view>
+    </view>
+  </view>
+
   <view class="foundation__notice">
-    登录、用户、名牌、模板和社交能力均未实现，需等待后续 Sprint。
+    当前未配置云环境，手动调用返回 UNAVAILABLE 属于预期降级。真实微信身份、数据库事务、
+    云函数部署与双真机验收均保留到 M1.2-B。
   </view>
 </view>

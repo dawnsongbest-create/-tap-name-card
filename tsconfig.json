@@ -12,6 +12,12 @@
     "skipLibCheck": true,
     "types": ["miniprogram-api-typings", "vitest/globals", "node"]
   },
-  "include": ["miniprogram/**/*.ts", "shared/**/*.ts", "tests/**/*.ts", "vitest.config.ts"],
+  "include": [
+    "cloudfunctions/**/*.ts",
+    "miniprogram/**/*.ts",
+    "shared/**/*.ts",
+    "tests/**/*.ts",
+    "vitest.config.ts"
+  ],
   "exclude": ["node_modules", "miniprogram_npm", "coverage", "dist"]
 }
