@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "工程初始化",
+  "usingComponents": {
+    "page-state": "/components/page-state/index"
+  }
+}

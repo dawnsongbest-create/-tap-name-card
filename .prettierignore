@@ -1,0 +1,14 @@
+node_modules/
+miniprogram_npm/
+coverage/
+dist/
+.cache/
+docs/PRD.md
+docs/MVP_SCOPE.md
+docs/DATA_MODEL.md
+docs/API_SPEC.md
+docs/UI_SPEC.md
+docs/TEST_PLAN.md
+docs/M0_REVIEW_SUMMARY.md
+miniprogram/**/*.wxml
+miniprogram/**/*.wxss

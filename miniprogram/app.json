@@ -1,0 +1,12 @@
+{
+  "pages": ["pages/foundation/index"],
+  "window": {
+    "navigationBarTitleText": "工程初始化",
+    "navigationBarBackgroundColor": "#f5f5f7",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f5f7",
+    "backgroundTextStyle": "light"
+  },
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

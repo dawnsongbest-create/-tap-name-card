@@ -1,0 +1,42 @@
+.page-state {
+  box-sizing: border-box;
+  padding: 28rpx;
+  border: 1rpx solid #d2d2d7;
+  border-radius: 20rpx;
+  background: #ffffff;
+}
+
+.page-state__indicator {
+  width: 28rpx;
+  height: 28rpx;
+  margin-bottom: 18rpx;
+  border: 4rpx solid #d2d2d7;
+  border-top-color: #1d1d1f;
+  border-radius: 50%;
+}
+
+.page-state__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.page-state__message {
+  margin-top: 8rpx;
+  color: #6e6e73;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.page-state__retry {
+  width: 100%;
+  margin-top: 22rpx;
+  border-radius: 14rpx;
+  background: #1d1d1f;
+  color: #ffffff;
+  font-size: 26rpx;
+}
+
+.page-state__retry--pressed {
+  opacity: 0.75;
+}

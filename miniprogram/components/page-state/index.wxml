@@ -1,0 +1,13 @@
+<view class="page-state page-state--{{viewModel.kind}}">
+  <view wx:if="{{viewModel.kind === 'loading'}}" class="page-state__indicator" aria-label="正在加载"></view>
+  <view class="page-state__title">{{title || viewModel.title}}</view>
+  <view class="page-state__message">{{message || viewModel.message}}</view>
+  <button
+    wx:if="{{viewModel.showRetry}}"
+    class="page-state__retry"
+    bindtap="onRetry"
+    hover-class="page-state__retry--pressed"
+  >
+    {{retryLabel}}
+  </button>
+</view>

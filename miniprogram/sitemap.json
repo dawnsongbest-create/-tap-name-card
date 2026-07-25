@@ -1,0 +1,9 @@
+{
+  "desc": "M1.1 工程初始化阶段的 sitemap 配置",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

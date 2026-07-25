@@ -1,7 +1,9 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M0 v1.1（第二轮 Review）｜日期：2026-07-24｜状态：`IN_REVIEW`  
-> 约束：本文件只做规划，不代表平台能力已验证或工程已初始化。  
+> 版本：M1.1 v1.0｜日期：2026-07-24｜状态：`IN_REVIEW`
+>
+> 约束：M1.1 工程底座已初始化；微信开发者工具、真实 AppID 与 CloudBase 能力仍未验证。
+>
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
 ## 1. 架构目标与非目标
@@ -188,34 +190,65 @@
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 目标仓库树（M1 才初始化）
+## 16. 当前仓库树（M1.1）
 
 ```text
 tap-name-card/
 ├─ AGENTS.md
 ├─ README.md
+├─ package-lock.json
 ├─ project.config.json
 ├─ project.private.config.json.example
 ├─ package.json
 ├─ tsconfig.json
+├─ eslint.config.mjs
+├─ prettier.config.mjs
+├─ vitest.config.ts
+├─ tools/
+│  └─ sync-miniprogram-shared.mjs
 ├─ miniprogram/
 │  ├─ app.ts / app.json / app.wxss
-│  ├─ pages/  components/  services/  state/
+│  ├─ sitemap.json
+│  ├─ pages/foundation/
+│  ├─ components/page-state/
+│  ├─ shared/（由根 shared/ 生成的运行时镜像）
+│  ├─ config/ services/ state/
 │  ├─ domain/ templates/ utils/ constants/ assets/
 ├─ cloudfunctions/
-│  ├─ shared/
-│  └─ <one-folder-per-function>/
+│  └─ README.md
 ├─ shared/
-│  ├─ types/ schemas/ errors/ constants/
+│  ├─ types/ errors/ constants/ validation/ logging/
 ├─ tests/
-│  ├─ unit/ integration/ fixtures/ manual/
+│  └─ unit/
 └─ docs/
    ├─ PRD.md DEVELOPMENT_PLAN.md MVP_SCOPE.md ARCHITECTURE.md
    ├─ DATA_MODEL.md API_SPEC.md UI_SPEC.md TEST_PLAN.md
    ├─ TASKS.md DECISIONS.md
 ```
 
-本树是规划，不代表本轮已创建工程。
+M1.1 只创建可导入、可检查、可测试的工程底座：
+
+- `pages/foundation` 明确标记为工程初始化页，不是正式 P02 首页或产品原型。
+- `components/page-state` 只演示 Loading、Empty、Error 和 Retry 最小接口；完整页面状态体系仍属于后续 Sprint。
+- `cloudfunctions/` 只有边界说明，没有正式函数、集合或 CloudBase 初始化。
+- 四个环境均有集中类型和安全空配置；真实环境 ID 不入库，未配置时页面显示开发提示。
+- 微信开发者工具配置采用 `miniprogramRoot`、`cloudfunctionRoot`、原生 `typescript` 编译插件和公开的 `touristappid` 基线，字段有效性仍需在开发者工具中验证。
+- 微信侧 TypeScript 不跨越 `miniprogramRoot` 导入：根 `shared/` 是唯一源，`miniprogram/shared/` 是提交到仓库的生成镜像；`shared:sync` 负责同步，三项静态质量命令通过 `shared:check` 阻止漂移。
+
+## 16.1 M1.1 工具链
+
+| 工具 | 已安装版本 | 用途 |
+|---|---:|---|
+| Node.js | 24.14.0 | 本地工具运行时 |
+| npm | 11.9.0 | 包管理与锁文件 |
+| TypeScript | 6.0.3 | 严格类型检查，不输出构建产物 |
+| ESLint | 10.7.0 | Flat Config 静态检查 |
+| typescript-eslint | 8.65.0 | TypeScript ESLint 规则 |
+| Prettier | 3.9.6 | TS/JSON/Markdown 工程文件格式 |
+| Vitest | 4.1.10 | M1.1 纯 TypeScript 单元测试 |
+| miniprogram-api-typings | 5.2.1 | 微信小程序全局类型 |
+
+WXML/WXSS 未引入额外格式化插件，由代码约定和微信开发者工具编译验证。PowerShell 环境使用 `npm.cmd`，避免修改本机脚本执行策略。
 
 ## 17. 不采用重型后端的原因
 

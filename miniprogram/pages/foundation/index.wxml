@@ -1,0 +1,35 @@
+<view class="foundation">
+  <view class="foundation__header">
+    <text class="foundation__eyebrow">M1.1 FOUNDATION</text>
+    <view class="foundation__title">工程初始化页</view>
+    <view class="foundation__description">
+      这个页面只验证微信原生小程序、TypeScript、基础组件和环境配置能够持续开发，不是正式首页或产品原型。
+    </view>
+  </view>
+
+  <view class="foundation__meta">
+    <view class="foundation__meta-row">
+      <text>当前环境</text>
+      <text class="foundation__meta-value">{{environmentName}}</text>
+    </view>
+    <view class="foundation__meta-row">
+      <text>云开发</text>
+      <text class="foundation__meta-value">{{cloudStatus}}</text>
+    </view>
+  </view>
+
+  <view class="foundation__section">
+    <view class="foundation__section-title">基础页面状态</view>
+    <view class="foundation__state-list">
+      <page-state kind="loading"></page-state>
+      <page-state kind="empty"></page-state>
+      <page-state kind="error"></page-state>
+      <page-state kind="retry" bind:retry="onRetry"></page-state>
+    </view>
+    <view class="foundation__retry-count">重试示例触发次数：{{retryCount}}</view>
+  </view>
+
+  <view class="foundation__notice">
+    登录、用户、名牌、模板和社交能力均未实现，需等待后续 Sprint。
+  </view>
+</view>

@@ -1,6 +1,7 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M0 v1.1（第二轮 Review）｜日期：2026-07-24｜状态：`IN_REVIEW`  
+> 版本：M1.1 v1.0｜日期：2026-07-24｜状态：`IN_REVIEW`
+>
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
 ## ADR-001 使用微信原生小程序
@@ -191,3 +192,39 @@
 - 替代：解除后一并恢复联系方式；永久保持 encounter BLOCKED。
 - 后果：解除拉黑后可以重新建立互动，但不会意外恢复旧敏感信息展示。
 - 风险/复审：产品负责人应在 M4 前确认；无论结果，拉黑期间任何敏感读取必须拒绝。
+
+## ADR-022 M1.1 使用 Node、ESLint、Prettier、TypeScript 与 Vitest
+
+- 状态：`ACCEPTED`。
+- 背景：M1.1 需要可重复安装、可格式化、可静态检查、可类型检查和可自动测试的轻量工具链。
+- 决策/原因：固定 Node 24.14.0/npm 11.x；使用 TypeScript 6.0.3、ESLint 10 Flat Config、typescript-eslint 8.65.0、Prettier 3.9.6、Vitest 4.1.10 和 `miniprogram-api-typings` 5.2.1；依赖由 `package-lock.json` 锁定。
+- 替代：Jest、旧版 ESLint 配置、无锁文件或虚假占位脚本。
+- 后果：四项质量命令可在 Windows 用 `npm.cmd` 真实执行；WXML/WXSS 暂由代码约定与开发者工具验证，不引入额外格式化插件。
+- 风险/复审：Node/依赖主版本升级必须单独验证，不随日常安装漂移；以锁文件为可复现基线。
+
+## ADR-023 M1.1 原生小程序目录与项目配置
+
+- 状态：`NEEDS_VALIDATION`。
+- 背景：需要微信开发者工具可导入的原生 TypeScript 工程，同时当前环境未检测到开发者工具，微信官方文档站点访问超时。
+- 决策/原因：采用仓库根目录项目配置、`miniprogram/` 源目录、原生 `typescript` 编译插件、`pages/foundation` 工程初始化页、`components/page-state` 最小组件和 `touristappid` 公共导入基线；不创建正式首页。
+- 替代：使用真实 AppID、引入 Taro/uni-app、提前创建产品页面。
+- 后果：代码、类型和测试可在本地验证；`project.config.json` 的字段识别、TypeScript 编译和基础库兼容必须由安装了微信开发者工具的人工验收确认。
+- 风险/复审：若当前开发者工具要求不同字段，只调整工程配置并更新本 ADR，不改变 PRD 或进入 M1.2。
+
+## ADR-024 M1.1 CloudBase 配置边界
+
+- 状态：`ACCEPTED`。
+- 背景：M1.1 需要环境承载结构，但云开发初始化、用户身份和集合属于 M1.2。
+- 决策/原因：集中定义 `local/development/staging/production`，默认全部 `cloudEnabled=false` 且无环境 ID；只提供返回安全失败结果的云函数调用类型外壳，不调用 `wx.cloud`。
+- 替代：提交真实环境 ID、创建测试集合、实现空壳 `authEnsureUser`。
+- 后果：未配置云环境时工程初始化页明确提示且不崩溃；仓库无真实 CloudBase 配置、集合或正式云函数。
+- 风险/复审：M1.2 必须依据最新官方文档确认初始化接口、环境注入和本地配置方式，并单独完成匿名/登录边界设计。
+
+## ADR-025 根共享源与小程序运行时镜像
+
+- 状态：`ACCEPTED`。
+- 背景：M1.1 人工验收确认微信开发者工具不会解析越过 `miniprogramRoot` 的相对 TypeScript 导入；原实现从 `miniprogram/config`、`services`、`utils` 直接引用根 `shared/`，导致编译失败，并连带出现 foundation 页面未注册。
+- 决策/原因：根目录 `shared/` 保持公共定义和工具的唯一源；生成并提交 `miniprogram/shared/` 作为微信运行时镜像，小程序代码只导入该镜像。`tools/sync-miniprogram-shared.mjs` 提供 `shared:sync` 和只读 `shared:check`，格式、Lint、类型检查均先验证镜像一致性。
+- 替代：扩大 `miniprogramRoot` 到仓库根目录；让微信代码继续跨根引用；手工维护两份共享代码；引入 Taro/uni-app 或额外打包框架。
+- 后果：微信编译器只看到 `miniprogram/` 内依赖，Node/Vitest 仍可直接测试根 `shared/`；镜像是生成物，不是第二个业务事实来源。
+- 风险/复审：任何根 `shared/` 修改必须运行 `npm.cmd run shared:sync`；遗漏会由质量命令失败阻止。M1.2 设计云函数共享方式时需要复用“唯一源 + 明确生成边界”原则，不得让运行时目录互相跨根引用。

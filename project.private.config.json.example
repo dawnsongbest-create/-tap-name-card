@@ -1,0 +1,7 @@
+{
+  "description": "复制为 project.private.config.json 后由微信开发者工具维护；不要提交真实个人配置。",
+  "projectname": "tap-name-card-local",
+  "setting": {
+    "compileHotReLoad": true
+  }
+}
