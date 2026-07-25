@@ -4,7 +4,7 @@
   "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "miniprogram",
   "projectname": "tap-name-card",
-  "appid": "touristappid",
+  "appid": "wxc061682046272324",
   "setting": {
     "useCompilerPlugins": ["typescript"],
     "es6": true,
