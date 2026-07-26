@@ -45,8 +45,253 @@
     </view>
   </view>
 
+  <view class="foundation__section" wx:if="{{showDevelopmentPolicyProbe}}">
+    <view class="foundation__section-title">Development-only 政策验收探针</view>
+    <view class="foundation__auth-panel">
+      <view class="foundation__meta-row">
+        <text>调用结果</text>
+        <text class="foundation__meta-value">{{policyResultStatus}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>客户端状态</text>
+        <text class="foundation__meta-value">{{policyClientState}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>needsPolicyAcceptance</text>
+        <text class="foundation__meta-value">{{policyNeedsAcceptance}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>acceptedTermsVersion</text>
+        <text class="foundation__meta-value">{{policyAcceptedTermsVersion}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>acceptedPrivacyVersion</text>
+        <text class="foundation__meta-value">{{policyAcceptedPrivacyVersion}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>replayed</text>
+        <text class="foundation__meta-value">{{policyReplayed}}</text>
+      </view>
+      <view class="foundation__request-id">requestId：{{policyRequestId}}</view>
+      <view class="foundation__actions">
+        <button
+          size="mini"
+          loading="{{policyProbeLoading}}"
+          disabled="{{policyProbeLoading}}"
+          bindtap="onAcceptV1Policies"
+        >
+          确认 v1/v1 政策
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="foundation__section" wx:if="{{showDevelopmentPolicyProbe}}">
+    <view class="foundation__section-title">Development-only 身份与政策自动验收</view>
+    <view class="foundation__auth-panel">
+      <view class="foundation__meta-row">
+        <text>整体结果</text>
+        <text class="foundation__meta-value">{{automaticValidationResult}}</text>
+      </view>
+      <view class="foundation__request-id">重复 ensure ×5</view>
+      <view class="foundation__meta-row">
+        <text>调用次数</text>
+        <text class="foundation__meta-value">{{ensureValidationTotal}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>成功数</text>
+        <text class="foundation__meta-value">{{ensureValidationSuccess}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>失败数</text>
+        <text class="foundation__meta-value">{{ensureValidationFailure}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>不同 userId 数量</text>
+        <text class="foundation__meta-value">{{ensureValidationDistinctUsers}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>userId 与状态是否一致</text>
+        <text class="foundation__meta-value">{{ensureValidationConsistent}}</text>
+      </view>
+
+      <view class="foundation__request-id">accountGetMe</view>
+      <view class="foundation__meta-row">
+        <text>整体结果</text>
+        <text class="foundation__meta-value">{{getMeValidationResult}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>与 ensure 同一用户</text>
+        <text class="foundation__meta-value">{{getMeSameUser}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>状态一致</text>
+        <text class="foundation__meta-value">{{getMeStatusConsistent}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>CurrentUserView 白名单</text>
+        <text class="foundation__meta-value">{{getMeStrictView}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>没有额外 ensure</text>
+        <text class="foundation__meta-value">{{getMeNoAdditionalEnsure}}</text>
+      </view>
+
+      <view class="foundation__request-id">accountAcceptPolicies ×2（固定 v1/v1）</view>
+      <view class="foundation__meta-row">
+        <text>整体结果</text>
+        <text class="foundation__meta-value">{{automaticPolicyResult}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>两次均成功</text>
+        <text class="foundation__meta-value">{{automaticPolicyBothSucceeded}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>needsPolicyAcceptance=false</text>
+        <text class="foundation__meta-value">{{automaticPolicyNeedsCleared}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>版本均为 v1/v1</text>
+        <text class="foundation__meta-value">{{automaticPolicyVersions}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>第二次 replayed=true</text>
+        <text class="foundation__meta-value">{{automaticPolicyReplayed}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>用户状态未改变</text>
+        <text class="foundation__meta-value">{{automaticPolicyStatusUnchanged}}</text>
+      </view>
+      <view class="foundation__request-id">
+        三个政策时间戳是否完全不变仍需在 CloudBase 控制台人工核对。
+      </view>
+      <view class="foundation__actions">
+        <button
+          size="mini"
+          loading="{{automaticValidationLoading}}"
+          disabled="{{automaticValidationLoading}}"
+          bindtap="onRunIdentityPolicyValidation"
+        >
+          运行身份与政策自动验收
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="foundation__section" wx:if="{{showDevelopmentPolicyProbe}}">
+    <view class="foundation__section-title">Development-only 并发验收</view>
+    <view class="foundation__auth-panel">
+      <view class="foundation__meta-row">
+        <text>总数</text>
+        <text class="foundation__meta-value">{{concurrentValidationTotal}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>成功数</text>
+        <text class="foundation__meta-value">{{concurrentValidationSuccess}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>失败数</text>
+        <text class="foundation__meta-value">{{concurrentValidationFailure}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>不同 userId 数量</text>
+        <text class="foundation__meta-value">{{concurrentValidationDistinctUsers}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>是否全部一致</text>
+        <text class="foundation__meta-value">{{concurrentValidationConsistent}}</text>
+      </view>
+      <view class="foundation__actions">
+        <button
+          size="mini"
+          loading="{{concurrentValidationLoading}}"
+          disabled="{{concurrentValidationLoading}}"
+          bindtap="onRunConcurrentEnsureValidation"
+        >
+          并发 ensure ×20
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="foundation__section" wx:if="{{showDevelopmentPolicyProbe}}">
+    <view class="foundation__section-title">Development-only 数据库权限负向验收</view>
+    <view class="foundation__auth-panel">
+      <view class="foundation__meta-row">
+        <text>整体结果</text>
+        <text class="foundation__meta-value">{{permissionValidationResult}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>users 集合聚合 read 被拒绝</text>
+        <text class="foundation__meta-value">{{usersReadPermission}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>users 随机文档 write 被拒绝</text>
+        <text class="foundation__meta-value">{{usersWritePermission}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>identity_mappings 集合聚合 read 被拒绝</text>
+        <text class="foundation__meta-value">{{mappingsReadPermission}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>identity_mappings 随机文档 write 被拒绝</text>
+        <text class="foundation__meta-value">{{mappingsWritePermission}}</text>
+      </view>
+      <view class="foundation__request-id">安全错误诊断（仅白名单字段）</view>
+      <view class="foundation__meta-row">
+        <text>operation outcome</text>
+        <text class="foundation__meta-value">{{permissionOperationOutcome}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>count（仅成功的集合聚合读取）</text>
+        <text class="foundation__meta-value">{{permissionOperationCount}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>typeof error</text>
+        <text class="foundation__meta-value">{{permissionDiagnosticType}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>error.code</text>
+        <text class="foundation__meta-value">{{permissionDiagnosticCode}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>error.errCode</text>
+        <text class="foundation__meta-value">{{permissionDiagnosticErrCode}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>error.errno</text>
+        <text class="foundation__meta-value">{{permissionDiagnosticErrno}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>规范化公开错误名称</text>
+        <text class="foundation__meta-value">{{permissionDiagnosticName}}</text>
+      </view>
+      <view class="foundation__meta-row">
+        <text>permission denied</text>
+        <text class="foundation__meta-value">{{permissionDiagnosticDenied}}</text>
+      </view>
+      <view class="foundation__request-id">
+        requestId：{{permissionDiagnosticRequestId}}
+      </view>
+      <view class="foundation__request-id">
+        read 使用集合级 count，不返回业务文档正文或文档 ID；write 使用随机 validation_probe_* 文档
+        ID。若任一操作正常返回或未被明确识别为权限拒绝，将立即显示 FAIL，不会自动删除或修改权限。
+      </view>
+      <view class="foundation__actions">
+        <button
+          size="mini"
+          loading="{{permissionValidationLoading}}"
+          disabled="{{permissionValidationLoading}}"
+          bindtap="onRunDatabasePermissionValidation"
+        >
+          运行数据库权限负向验收
+        </button>
+      </view>
+    </view>
+  </view>
+
   <view class="foundation__notice">
-    development 环境标识已配置，但集合、权限、环境变量和云函数尚未部署。完成云端配置前，
-    手动调用安全返回 UNAVAILABLE 属于预期行为。
+    本页仅用于 M1.2-B development 环境验收，不属于正式产品 UI。所有身份和政策操作只能由
+    人工点击触发，应用启动不会自动创建账号或确认政策。
   </view>
 </view>

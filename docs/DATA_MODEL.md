@@ -1,7 +1,8 @@
 # 「碰一下名牌」MVP 数据模型
 
-> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
-> 本文为逻辑模型；CloudBase 实际索引、事务和唯一能力须在 M1/M4 依据官方文档及并发测试确认。  
+> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
+> 本文为逻辑模型；M1.2 的 `users/identity_mappings` 已在 development 验证，后续集合的
+> 实际索引、事务和唯一能力仍须在对应里程碑依据官方文档及并发测试确认。
 > 关联：[架构](./ARCHITECTURE.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
 ## 1. 全局约定
@@ -59,8 +60,11 @@ CloudBase 若无严格唯一约束：用键本身作为文档 `_id` 或建立 `u
   `runTransaction(..., 0)` 中创建 user 与 mapping；只将精确
   `DATABASE_TRANSACTION_CONFLICT` 映射为可重试冲突。写入调用遵循 Node SDK 的
   `set(data)/update(data)` 扁平参数，不使用小程序数据库 API 的 `{data}` 包装。
-- 云端状态：集合尚未创建；真实文档不存在返回形状、冲突码、权限和事务隔离仍为
-  `NEEDS_VALIDATION`。
+- development 状态：两个集合已创建并设为所有客户端不可读写。HMAC Secret 轮换并清理
+  旧测试身份数据后，在 `users=0`、`identity_mappings=0` 的状态直接执行首次
+  `authEnsureUser ×20`，最终只产生一个 user 和一个 mapping；后续 ensure/getMe/政策
+  验收未增加数量。mapping 的 `userId` 指向存在的 user，正文仅含契约字段且不保存原始
+  OpenID。精确 `DATABASE_TRANSACTION_CONFLICT` 平台错误对象保留为后续观察项。
 
 ### 3.2 `cards`（P0）
 

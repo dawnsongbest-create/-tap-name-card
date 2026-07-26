@@ -1,8 +1,9 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
 >
-> 约束：身份领域层和 CloudBase 平台适配已在本地实现；真实 development 身份、事务、规则和部署仍为 `NEEDS_VALIDATION`。
+> 约束：M1.2 身份领域层、CloudBase 平台适配和真实 development 主链路已通过验收；
+> RESTRICTED/DELETED 真实状态、双端双账号、精确平台冲突错误和 SDK 上线风险保留为后续验证。
 >
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
@@ -200,7 +201,7 @@ AppID 和 EnvId 是环境标识，允许提交；AppSecret、HMAC/AI Key 仅在�
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 当前仓库树（M1.2-B local）
+## 16. 当前仓库树（M1.2 final）
 
 ```text
 tap-name-card/
@@ -240,7 +241,7 @@ tap-name-card/
    ├─ TASKS.md DECISIONS.md
 ```
 
-M1.2-B 在 M1.2-A 身份领域层上增加本地可验证的平台适配：
+M1.2-B 在 M1.2-A 身份领域层上增加平台适配，并已完成真实 development 验收：
 
 - `pages/foundation` 明确标记为工程初始化页，不是正式 P02 首页或产品原型。
 - `components/page-state` 只演示 Loading、Empty、Error 和 Retry 最小接口；完整页面状态体系仍属于后续 Sprint。
@@ -250,7 +251,7 @@ M1.2-B 在 M1.2-A 身份领域层上增加本地可验证的平台适配：
   `wx.cloud`，不调用身份函数。
 - 微信开发者工具配置采用 `miniprogramRoot`、`cloudfunctionRoot`、原生 `typescript`
   编译插件和真实 AppID；目录识别、TypeScript/WXML/WXSS 编译及页面注册已通过
-  M1.1 与 M1.2-A 人工验收，M1.2-B 尚待复验。
+  M1.1、M1.2-A 和 M1.2-B 人工验收。
 - 微信侧和云函数侧都不跨运行时根目录导入：根 `shared/` 是契约唯一源，
   `miniprogram/shared/` 与 `cloudfunctions/shared/contracts/` 是生成镜像；
   `shared:sync` 负责同步，静态质量命令通过 `shared:check` 阻止漂移。
@@ -260,12 +261,16 @@ M1.2-B 在 M1.2-A 身份领域层上增加本地可验证的平台适配：
   不缓存进程级动态身份。
 - `@cloudbase/node-sdk@3.18.3` 只负责数据库与事务；Repository 使用 Node SDK 的
   `set(data)/update(data)` 扁平数据参数，不混用小程序端 `{data}` 包装。
-- 两个直接 SDK 和 `ws@8.21.1` 均锁定精确版本；运行时目标为 Nodejs20.19。
+- 两个直接 SDK 和 `ws@8.21.1` 均锁定精确版本。三个现有 development 函数实际运行
+  `Nodejs16.13`，由 ADR-032 限定接受；staging/production 新建函数必须显式使用
+  `Nodejs20.19` 或届时批准的更新 LTS Runtime。
 - SDK `runTransaction` 的内部重试被设为 `0`，领域层只对精确
-  `DATABASE_TRANSACTION_CONFLICT` 做最多三次退避。该错误结构和并发行为仍需真实环境验证。
-- 本地 fake database 只证明适配契约、写入参数形状、回滚和故障路径，不等同于真实
-  CloudBase 事务已验证。隔离构建门禁会在系统临时目录安装各包生产依赖并加载入口，
-  也不等同于已部署。
+  `DATABASE_TRANSACTION_CONFLICT` 做最多三次退避。干净集合上的真实首次 ensure ×20
+  只创建一个 user/mapping，证明当前 development 唯一结果；精确平台冲突错误对象仍为
+  后续观察项。
+- 本地 fake database 证明适配契约、写入参数形状、回滚和故障路径；真实 development
+  已验证可信身份、三个函数调用、跨集合唯一结果、权限拒绝和政策幂等。隔离构建门禁仍会
+  在系统临时目录安装各包生产依赖并加载入口。
 
 ## 16.1 M1.1 工具链
 

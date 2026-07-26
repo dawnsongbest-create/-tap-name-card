@@ -2,11 +2,12 @@
 
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
-当前仓库已完成 **M1.2-B 本地代码接入**：包含共享身份契约、服务端 HMAC 身份键、
-CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个可构建云函数入口、客户端
-`wx.cloud` 初始化/调用和自动测试。仓库没有创建数据库集合、配置权限、注入真实 HMAC
-密钥或部署云函数；名牌、模板、收藏、认识请求、相遇、联系方式、AI 和 NFC 均未实现。
-M1-02 在 development 云端验收前保持 `IN_REVIEW`。
+当前仓库已完成 **M1.2 云环境与身份**：共享身份契约、服务端 HMAC 身份键、
+CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
+客户端 `wx.cloud` 初始化/调用、本地自动测试和真实 development 验收均已通过。development
+已部署 `authEnsureUser`、`accountGetMe`、`accountAcceptPolicies`，并创建客户端不可读写的
+`users` 与 `identity_mappings`。M1-02 状态为 `DONE`；M1.3 尚未开始，名牌、模板、收藏、
+认识请求、相遇、联系方式、AI 和 NFC 均未实现。
 
 ## 环境要求
 
@@ -44,6 +45,11 @@ OpenID、AppSecret、身份 HMAC 密钥和其他凭据不得进入仓库或小�
 App 启动只执行 `wx.cloud.init`，身份状态保持 `ANONYMOUS`，不会调用三个身份云函数。
 只有点击 foundation 页的手动身份探针才发起身份请求。初始化或调用失败会返回安全失败，
 不会白屏或伪装成真实云能力。
+
+development 三个现有函数实际运行 `Nodejs16.13`，这是 ADR-032 限定的 development
+平台偏差；不得复制到 staging/production。新建 staging/production 函数必须显式选择
+`Nodejs20.19` 或届时经项目批准的更新 LTS Runtime。development 当前政策版本为
+`TERMS_VERSION=v1`、`PRIVACY_VERSION=v1`。
 
 ## 微信开发者工具导入
 
@@ -96,7 +102,7 @@ npm.cmd run shared:sync
 - `cloudfunctions/`：身份领域层、微信可信身份、CloudBase 事务适配和三个可独立构建的云函数入口。
 - `shared/`：公共定义和工具的唯一源。
 - `tools/`：共享契约同步、云函数构建与部署边界检查脚本。
-- `tests/`：M1.1 单元测试及 M1.2-A/M1.2-B 身份单元和本地集成测试。
+- `tests/`：M1.1 单元测试及 M1.2 身份单元、本地集成和 development-only 验收工具测试。
 - `docs/`：产品、架构、测试和任务基线。
 
 ## 换一台 Windows 电脑继续
@@ -113,9 +119,10 @@ npm.cmd run shared:sync
 
 ### 为什么手动身份探针仍可能返回 UNAVAILABLE？
 
-本地代码已经具备 CloudBase 入口，但真实集合、权限、环境变量和部署尚未完成。任何缺失
-配置或平台失败都会安全映射为不可用。只有 development 云端验收通过后才能声称真实能力
-可用。
+真实 development 身份主链路已经通过验收。`local` 环境会按设计保持云能力关闭；在
+development 中，环境未关联、函数配置缺失、调用权限、网络或平台失败仍会安全映射为
+不可用，不会把失败伪装成已认证。按运行手册核对环境和三个函数，不要在客户端加入
+OpenID、Secret 或绕过权限的兜底。
 
 ### 为什么页面不是正式首页？
 

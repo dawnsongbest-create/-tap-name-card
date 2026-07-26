@@ -65,6 +65,18 @@ async function executeOperation(
   return createAccountAcceptPoliciesHandler(service)(input, requestId);
 }
 
+function logSafeCloudFunctionFailure(
+  functionName: AuthCloudFunctionName,
+  requestId: string,
+  errorCode: 'SERVICE_UNAVAILABLE' | 'UNKNOWN_ERROR',
+): void {
+  console.error('Cloud function request failed.', {
+    functionName,
+    requestId,
+    errorCode,
+  });
+}
+
 export function createAuthCloudFunctionMain(
   functionName: AuthCloudFunctionName,
   dependencies: CloudFunctionRuntimeDependencies,
@@ -86,8 +98,23 @@ export function createAuthCloudFunctionMain(
         createUserId: dependencies.createUserId ?? randomUUID,
       });
 
-      return await executeOperation(functionName, service, request.input, request.requestId);
+      const result = await executeOperation(
+        functionName,
+        service,
+        request.input,
+        request.requestId,
+      );
+
+      if (
+        !result.success &&
+        (result.error?.code === 'SERVICE_UNAVAILABLE' || result.error?.code === 'UNKNOWN_ERROR')
+      ) {
+        logSafeCloudFunctionFailure(functionName, request.requestId, result.error.code);
+      }
+
+      return result;
     } catch {
+      logSafeCloudFunctionFailure(functionName, request.requestId, 'SERVICE_UNAVAILABLE');
       return createFailureResult('SERVICE_UNAVAILABLE', request.requestId);
     }
   };

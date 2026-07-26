@@ -100,4 +100,18 @@ describe('WeChat mini-program compilation boundary', () => {
     expect(appSource).not.toContain('callFunction');
     expect(appSource).toContain('initializeCloudForEnvironment');
   });
+
+  it('keeps identity secrets and persistent identity caches out of client runtime code', () => {
+    const clientSource = listTypeScriptFiles(MINIPROGRAM_ROOT)
+      .filter((sourcePath) => !sourcePath.endsWith('env.example.ts'))
+      .map((sourcePath) => readFileSync(sourcePath, 'utf8'))
+      .join('\n');
+
+    expect(clientSource).not.toMatch(/\bopenId\b/u);
+    expect(clientSource).not.toMatch(/\bidentityKey\b/u);
+    expect(clientSource).not.toContain('IDENTITY_HMAC_SECRET');
+    expect(clientSource).not.toMatch(
+      /\b(?:setStorage|setStorageSync|getStorage|getStorageSync)\s*\(/u,
+    );
+  });
 });

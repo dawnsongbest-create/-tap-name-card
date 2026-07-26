@@ -1,5 +1,9 @@
 # M1.2-B 本地代码独立审查
 
+> 历史快照说明：本文的 `NOT_VALIDATED/IN_REVIEW` 是 2026-07-25 本地代码审查时的状态。
+> 真实 development 验收和最终关门已完成，当前结论见
+> [`M1_2_FINAL_CLOSEOUT.md`](./M1_2_FINAL_CLOSEOUT.md)：M1-02 `DONE`。
+
 - 审查日期：2026-07-25
 - 仓库：`tap-name-card`
 - 分支：`main`

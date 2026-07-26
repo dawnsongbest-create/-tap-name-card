@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：M1-02 `DONE`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -247,8 +247,9 @@
 - 替代：客户端传 OpenID；无密钥哈希；只查 users 再写；新增操作重放集合。
 - 后果：同环境有确定性幂等键，跨环境不可关联；密钥轮换会影响映射解析，需要在云端接入时
   单独设计运维流程，M1.2-A 不实现轮换。
-- 风险/复审：真实 CloudBase 跨文档事务、冲突错误和可信上下文仍为
-  `NEEDS_VALIDATION`；development 验收后更新验证记录。
+- 风险/复审：development 已验证可信上下文、HMAC 轮换、跨集合唯一结果和客户端权限；
+  干净集合首次 ensure ×20 最终只产生一个 user/mapping。精确平台冲突错误对象仍作为
+  后续观察项，不阻塞 M1-02。
 
 ## ADR-027 身份接口与政策确认契约
 
@@ -262,7 +263,8 @@
   但允许 getMe、阅读和重新确认。
 - 替代：建号时捆绑协议；每个接口建设 operation replay 集合；返回 DELETED 视图。
 - 后果：接口更小、语义独立；未来关键写操作必须统一执行政策版本守卫。
-- 风险/复审：政策正文承载和当前版本的云端配置方式需在正式接入时验证，不在客户端写死。
+- 风险/复审：development 已通过服务端 `v1/v1` 配置、同时确认和重复确认幂等；
+  版本仍由服务端环境变量控制，不在客户端身份契约中作为授权事实。
 
 ## ADR-028 M1.2 分为本地实现与 development 云端验收
 
@@ -276,6 +278,10 @@
 - 替代：等待云环境后一次实现；本地伪造 CloudBase SDK/配置并标完成。
 - 后果：本地算法可审查且平台缺口可见；云端适配仍是明确门禁。
 - 风险/复审：真实 SDK 入口和事务限制必须基于届时官方文档实现，不能照搬内存适配器细节。
+
+复审结论：2026-07-27 已完成 M1.2-B development 云端验收和最终关门检查，满足本 ADR
+设定的两阶段完成条件；M1-02 更新为 `DONE`。延后验证项目记录在最终 Closeout，不阻塞
+本里程碑。
 
 ## ADR-029 M1.2-B 初始单 CloudBase Node SDK 方案
 
@@ -329,7 +335,7 @@
 
 ## ADR-030 M1.2-B 分离微信可信身份与 CloudBase 数据库 SDK
 
-- 状态：`ACCEPTED_LOCAL`；真实环境为 `NOT_VALIDATED`，生产依赖公告为审查条件。
+- 状态：`ACCEPTED_DEVELOPMENT_VALIDATED`；生产依赖公告继续受 ADR-031 约束。
 - 背景：M1.2-B 独立审查必须证明真实微信可信身份来源、Node 20 兼容和独立部署包。
   mock `context` 能解析并不能证明微信调用链真实可用；同时 Node SDK 的
   `DocumentReference.set/update` 参数形状必须与实际包一致。
@@ -347,8 +353,8 @@
   - Repository 遵循 Node SDK 的 `set(data)/update(data)` 扁平参数；禁止使用小程序
     数据库 API 风格的 `{data}` 包装。fake database 同步采用此形状，以免测试掩盖嵌套写入。
   - `runTransaction(..., 0)` 关闭 SDK 内部冲突重试；只把官方错误码
-    `DATABASE_TRANSACTION_CONFLICT` 映射为领域冲突，总尝试最多三次。真实错误对象属性和
-    并发行为仍需 development 验证。
+    `DATABASE_TRANSACTION_CONFLICT` 映射为领域冲突，总尝试最多三次。干净 development
+    集合首次 ensure ×20 已验证唯一 user/mapping 结果；精确错误对象属性仍为后续观察项。
   - `cloudfunctions:check:isolated` 只复制 `index.js/package.json/package-lock.json`
     到系统临时目录，执行 `npm ci --omit=dev`、生产依赖树检查和入口加载后清理。
     三个包已在本机默认 Node 24 和临时 Node 20.19.6 下分别通过。
@@ -363,7 +369,8 @@
   - 每个函数生产锁文件当前 `npm audit` 为 6 项公告：1 moderate、5 high、0 critical。
     代码不把客户端值用于 SDK URL、代理、JWT、数据库表达式或 WebSocket，但这不能消除
     上游公告；deployment 前必须复核新版或由产品负责人书面接受残余风险。
-  - 本地 SDK adapter、写入参数和隔离加载通过仍不等于真实 OpenID、事务、权限或部署通过。
+  - development 已验证真实可信微信身份、三个函数部署/调用、唯一 user/mapping 结果、
+    客户端权限拒绝、政策幂等和脱敏日志；这些结果不自动外推到 staging/production。
 - 官方依据：
   - 微信小程序调用云函数与 `getWXContext()`：
     <https://docs.cloudbase.net/recipes/add-cloud-function-wechat-miniprogram>
@@ -381,9 +388,10 @@
     <https://docs.cloudbase.net/en/error-code/DATABASE_TRANSACTION_CONFLICT>
   - Nodejs20.19 运行时：
     <https://docs.cloudbase.net/cloud-function/runtime-support>
-- 风险/复审：真实 `getWXContext()`、AppID 关联、权限执行身份、Node SDK 在线安装、
-  事务错误对象和 6 项依赖公告在 development 部署前仍是门禁。任一 SDK 升级必须重跑
-  adapter、Repository、构建、Node 20 隔离加载和 `npm audit`。
+- 风险/复审：真实 `getWXContext()`、AppID 关联、权限执行身份和 Node SDK 在线安装已在
+  development 通过。精确事务冲突错误对象与 SDK 公告转为 staging/production 门禁；
+  任一 SDK 升级必须重跑 adapter、Repository、构建、目标 Runtime 隔离加载和
+  `npm audit`。
 
 ## ADR-031 限定接受 M1.2-B development 验收的 SDK 传递依赖风险
 
@@ -396,8 +404,7 @@
 - 决策：产品负责人书面接受上述剩余风险，但只用于完成 M1.2-B 的隔离 development
   CloudBase 环境验收。该接受使 M1.2-B 本地实现和 development 部署候选可以标记
   `PASS`，并仅解除 ADR-030 中“依赖公告阻止 development 部署候选通过”的条件；
-  不解除 ADR-030 的任何真实云端验证门禁，不代表任何真实 CloudBase 能力已经验证，
-  也不允许把 M1-02 标记为 `DONE`。
+  该风险接受本身不解除任何真实云端验证门禁，也不能单独把 M1-02 标记为 `DONE`。
 - 强制边界：
   - 仅可使用独立 development CloudBase 环境和测试数据；
   - 不向正式用户开放，不得用于 staging 或 production；
@@ -412,6 +419,75 @@
   - staging、production 或面向真实用户的任何使用都必须重新审批，不能继承本记录。
 - 后果：
   - M1.2-B 本地代码审查结论可由 `CONDITIONAL_PASS` 更新为 `PASS`；
-  - 真实 CloudBase 能力继续为 `NOT_VALIDATED`；
-  - 整体 M1-02 继续为 `IN_REVIEW`，只有真实 development 云端验收完成后才能评估
-    是否标记 `DONE`。
+  - 2026-07-27 真实 development 验收及其他 blocker 已独立完成，M1-02 因完整
+    Closeout 而更新为 `DONE`，不是因为风险接受本身；
+  - staging、production 或正式用户场景仍不得继承本风险接受。
+
+## ADR-032 接受 M1.2 development 的 Nodejs16.13 Runtime 平台偏差
+
+- 状态：`ACCEPTED_DEVELOPMENT_DEVIATION`
+- 日期：2026-07-27
+- 决策人：产品负责人
+- 背景：
+  - M1.2-B 原计划以 `Nodejs20.19` 作为三个身份云函数的目标 Runtime，三个独立部署包
+    的 `engines.node` 和构建目标继续表达该 staging/production 目标。
+  - development 中已经创建并完成主链路验证的 `authEnsureUser`、`accountGetMe`、
+    `accountAcceptPolicies` 实际 Runtime 均为 `Nodejs16.13`；CloudBase 控制台只展示
+    Runtime，没有修改入口。
+  - 使用 CloudBase CLI 对 `authEnsureUser` 进行了两次真实 canary：一次直接指定
+    `runtime=Nodejs20.19`，一次使用仓库外、只声明函数名和 Runtime 的最小
+    `cloudbaserc.json`。两次 CLI 均报告成功，但云端安全回读仍为 `Nodejs16.13`，
+    且未观察到其他函数配置变化。
+  - 腾讯云 SCF `UpdateFunctionConfiguration` 官方 API 将 `Runtime` 说明为创建时指定、
+    目前不支持修改。继续尝试更新 existing function Runtime 不具备可靠的官方底层能力。
+- 兼容性审计：
+  - 三个当前 `index.js` 构建产物均通过 ES2021 语法解析；业务/shared 代码使用的 Node
+    核心 API 仅包括 `node:crypto` 的 `createHmac` 和 `randomUUID`，两者均早于
+    Node 16.13 可用。
+  - 三个生产锁文件各包含 103 个依赖包；其中 49 个声明 Node engines，Node 16.13
+    对全部声明范围均满足，没有生产依赖明确要求 Node >=18 或 >=20。
+  - `@cloudbase/node-sdk@3.18.3` 声明 Node >=12；
+    `wx-server-sdk@4.0.2` 未声明更高 Node engines，其内嵌
+    `@cloudbase/node-sdk@3.17.2` 声明 Node >=12；`ws@8.21.1` 声明 Node >=10。
+  - 三个函数已经在真实 development `Nodejs16.13` Runtime 上通过
+    `authEnsureUser`、`accountGetMe`、`accountAcceptPolicies`、重复/并发 ensure、
+    CurrentUserView、政策幂等和数据库权限负向验收。静态检查与真实执行未发现
+    Node 16.13 兼容性阻断。
+  - 三个函数自身的 `engines.node = "20"` 保留为新环境部署目标；本 ADR 是既有
+    development 平台实例的显式例外，不把 Node 16 声明为项目通用支持版本。
+- 决策：
+  - 为避免删除并重建已经完成可信身份、数据库权限和事务主链路验证的 development
+    身份基础设施，接受三个现有 development 函数继续使用 `Nodejs16.13`。
+  - 原 M1.2 Final Review 中“development 必须为 Nodejs20.19”的 Runtime blocker
+    降级为 `ACCEPTED_DEVELOPMENT_DEVIATION`，不再单独阻塞 M1-02。
+  - 停止继续尝试修改 existing function Runtime；不因本决策删除或重建现有函数。
+  - 不允许把 development 的 `Nodejs16.13` 配置直接复制到 staging 或 production。
+  - staging/production 新建函数时必须显式选择 `Nodejs20.19`，或届时经项目批准的
+    更新 LTS Runtime；若平台、SDK 或 Node 生命周期状态已经变化，优先选择通过复审的
+    更新 LTS，而不是机械沿用旧目标。
+- staging/production 门禁：
+  - staging 创建前重新执行完整 Node Runtime compatibility review，包括业务 API、
+    构建 target、三个生产锁文件 engines、隔离安装/入口加载、真实可信身份、事务和
+    `npm audit --omit=dev`。
+  - 必须在目标 Runtime 上重新运行三个函数的构建、隔离加载和真实 CloudBase 主链路
+    验收；development 的 Node16 结果不能替代 staging/production 验收。
+  - 任何 SDK 或锁文件变化都必须重新执行上述检查，不能继承本偏差决定。
+- 风险与边界：
+  - Node 16 已结束上游生命周期，不再接收官方安全修复；因此本偏差仅限隔离
+    development 环境、测试数据和 M1.2 验收，不得面向正式用户。
+  - 未声明 engines 的传递依赖不能仅凭静态元数据证明全部潜在路径兼容；当前接受依赖
+    锁定版本、真实主链路成功和自动门禁的组合证据，并保留 staging 前复审门禁。
+  - 本 ADR 只处理 Runtime blocker，不解除 ADR-031 的 SDK 公告边界，不处理其他
+    M1.2 Final Review blocker。其他 blocker 于 2026-07-27 独立完成后，M1-02 才更新为
+    `DONE`。
+- 官方依据：
+  - CloudBase Runtime 支持：
+    <https://docs.cloudbase.net/cloud-function/runtime-support>
+  - 腾讯云 SCF 更新函数配置：
+    <https://cloud.tencent.com/document/product/583/18580>
+  - Node.js Runtime 生命周期：
+    <https://nodejs.org/en/about/eol>
+  - Node.js `crypto.createHmac` 与 `crypto.randomUUID`：
+    <https://nodejs.org/api/crypto.html>
+  - CloudBase Node SDK：
+    <https://www.npmjs.com/package/@cloudbase/node-sdk>

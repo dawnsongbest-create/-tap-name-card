@@ -1,6 +1,6 @@
 # 「碰一下名牌」云函数 API 规格
 
-> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
 > 本文定义逻辑契约，不声明任何未验证的微信/CloudBase API 名称。  
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[UI](./UI_SPEC.md)｜[测试](./TEST_PLAN.md)
 
@@ -59,7 +59,7 @@ interface SharedContact extends ContactSummary { value?: string; fileUrl?: strin
 
 | 函数（优先级） | 目的与 TypeScript 契约 | 登录/权限/校验 | 数据、状态、事务、幂等 | 频率、错误、测试与客户端失败 |
 |---|---|---|---|---|
-| `authEnsureUser` P0 | `input:{}` → `CurrentUserView`；首次主动互动时建号 | 需要可信微信身份；不接受 openId/userId；匿名打开 P11 或应用启动不调用 | R/W `users/identity_mappings`；identityKey 保证幂等；同一事务创建；冲突最多三次退避；无 operationId | `AUTH_REQUIRED/ACCOUNT_DELETED/INVALID_INPUT/SERVICE_UNAVAILABLE`；50 路并发本地只有一条；失败保持匿名/提示重试 |
+| `authEnsureUser` P0 | `input:{}` → `CurrentUserView`；首次主动互动时建号 | 需要可信微信身份；不接受 openId/userId；匿名打开 P11 或应用启动不调用 | R/W `users/identity_mappings`；identityKey 保证幂等；同一事务创建；冲突最多三次退避；无 operationId | `AUTH_REQUIRED/ACCOUNT_DELETED/INVALID_INPUT/SERVICE_UNAVAILABLE`；50 路本地并发和干净 development 首次 20 路并发均只有一条；失败保持匿名/提示重试 |
 | `accountGetMe` P0 | `input:{}` → `CurrentUserView` | 登录；仅本人；不接受身份字段 | R users；只读；无 operationId | `AUTH_REQUIRED/USER_NOT_FOUND/ACCOUNT_DELETED/SERVICE_UNAVAILABLE`；响应无 openId；失败回匿名/不可用 |
 | `accountAcceptPolicies` P0 | `input:{acceptedTermsVersion:string,acceptedPrivacyVersion:string}` → `{user:CurrentUserView,replayed:boolean}` | 登录；两项必须一次同时确认且必须等于当前服务端版本；RESTRICTED 可调用 | W users；两版本和两时间原子写；相同版本状态幂等；不解除 RESTRICTED；无 operationId | `AUTH_REQUIRED/USER_NOT_FOUND/ACCOUNT_DELETED/POLICY_VERSION_UNSUPPORTED/INVALID_INPUT/SERVICE_UNAVAILABLE`；版本过期后关键业务写阻止，但 getMe/阅读/确认仍可用 |
 | `accountDelete` P0（M4） | `input:{confirm:true,meta}` → `Ack` | 登录、本人、二次确认 | W users/cards/contacts/blocks；先 DELETED 和公开/私密入口失效，后续清理可恢复；恢复/幂等字段在 M4 决定 | 严格；`INVALID_INPUT/DUPLICATE_ACTION/SERVICE_UNAVAILABLE`；故障注入与重放；未知结果调用 accountGetMe/公共 Token 验证 |
@@ -75,9 +75,13 @@ interface SharedContact extends ContactSummary { value?: string; fileUrl?: strin
   缺失身份返回 `AUTH_REQUIRED`，APPID 不匹配安全映射为 `SERVICE_UNAVAILABLE`。
 - 函数启动依赖 `IDENTITY_HMAC_SECRET`、`EXPECTED_MINIPROGRAM_APP_ID`、
   `TERMS_VERSION`、`PRIVACY_VERSION`；任一缺失均返回 `SERVICE_UNAVAILABLE`。
-- 本地入口和部署包已可构建并在隔离临时目录安装生产依赖后加载；真实微信上下文、
-  环境变量、事务和权限仍为
-  `NEEDS_VALIDATION`。
+- development 当前政策版本为 `TERMS_VERSION=v1`、`PRIVACY_VERSION=v1`。两项必须
+  同时提交；相同版本第二次确认返回 `replayed=true`。
+- 三个入口已部署并从关联小程序完成真实调用；可信微信上下文、服务端环境变量、
+  user/mapping 唯一结果、客户端数据库权限拒绝、CurrentUserView 白名单和政策幂等均
+  已验证。精确 `DATABASE_TRANSACTION_CONFLICT` 平台错误对象仍为后续观察项。
+- development 三个现有函数运行 `Nodejs16.13`，属于 ADR-032 接受的平台偏差；
+  staging/production 新建函数必须使用 `Nodejs20.19` 或届时批准的更新 LTS Runtime。
 
 ## 3. 名牌
 

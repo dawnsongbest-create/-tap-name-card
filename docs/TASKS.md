@@ -1,11 +1,10 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：M1-02 `DONE`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01 为 `DONE`；M1-02 已完成 M1.2-B 本地代码接入并保持
-> `IN_REVIEW`，只有 development 云端验收通过后才能为 `DONE`；M1-03 及以后未开始。
+> 当前规则：M0 已人工通过；M1-01、M1-02 为 `DONE`；M1-03 及以后未开始。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -59,21 +58,26 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 - 元数据：M1｜M1.2｜P0｜依赖 M1-01。
 - 范围：四环境映射、可信身份、协议、账号状态、匿名/登录分离；不做名牌业务。
 - 目录：`miniprogram/services/auth.ts`、`miniprogram/state/auth.ts`、三个身份处理器、
-  `cloudfunctions/shared/auth|db`、根 shared 契约及两个运行时镜像；计划集合
-  `users/identity_mappings`，M1.2-A 未建库。完整 `accountDelete` 与 P23 注销在 M4-05
-  实现。
+  `cloudfunctions/shared/auth|db`、根 shared 契约及两个运行时镜像；development 集合
+  `users/identity_mappings`。完整 `accountDelete` 与 P23 注销在 M4-05 实现。
 - M1.2-A 已完成：HMAC identityKey、CurrentUserView 白名单、内存原子事务、最多三次
   冲突退避、独立政策确认、客户端状态/手动探针；应用启动和匿名浏览不建号。
 - M1.2-B local 已完成：development AppID/EnvId 配置、`wx.cloud` 初始化和 caller、
   按调用 `wx-server-sdk.getWXContext()` 解析可信微信身份、CloudBase Repository、
-  四项环境变量门禁、三个 `main` 入口、自包含 Nodejs20 构建包及隔离生产依赖加载测试；
-  未连接或修改云端资源。
+  四项环境变量门禁、三个 `main` 入口、自包含 Nodejs20 目标构建包及隔离生产依赖加载测试。
 - 本地验收：首次幂等、50 路并发仅一条 user/mapping、OpenID/密钥不返回、
   ACTIVE/RESTRICTED/DELETED 映射、政策原子/幂等、客户端调用边界、SDK adapter、
   fake CloudBase 事务和部署包自动测试。
-- M1.2-B 云端 `NEEDS_VALIDATION`：真实可信微信上下文、环境变量、CloudBase
-  事务冲突/规则/部署、开发者工具和 iPhone/Android 双账号冒烟。
-- 风险：真实 CloudBase 冲突语义、权限规则、匿名路由、环境误连。状态：`IN_REVIEW`。
+- M1.2-B development 已完成：三个函数部署和收紧后的调用权限、可信微信身份、
+  HMAC Secret 轮换、`v1/v1` 政策、CurrentUserView、客户端集合权限拒绝、脱敏日志和
+  干净集合首次 ensure ×20。真实数据库最终只有一个相互一致的 user/mapping，
+  mapping 不含原始 OpenID。
+- Runtime：三个现有 development 函数运行 `Nodejs16.13`，由 ADR-032 作为
+  development-only 偏差接受；staging/production 新建函数必须使用 `Nodejs20.19`
+  或届时批准的更新 LTS Runtime。
+- 延后验证：RESTRICTED/DELETED 真实状态、iPhone/Android 双账号 smoke、精确
+  `DATABASE_TRANSACTION_CONFLICT` 平台行为、SDK advisory staging/production
+  前升级或复审；均不阻塞 M1-02。状态：`DONE`。
 
 ### M1-03 共享基础设施
 

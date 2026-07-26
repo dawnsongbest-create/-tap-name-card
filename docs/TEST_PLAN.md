@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M1.2-B local v1.0｜日期：2026-07-25｜状态：`IN_REVIEW`
+> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -145,7 +145,7 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 - 接受联系方式失败：状态和双方选择同时生效或都不生效。
 - 拉黑/注销部分清理失败：block/DELETED 策略先阻止敏感读，后台可幂等续跑。
 
-### 7.4 M1.2-A 领域层、M1.2-B 本地接入与云端边界
+### 7.4 M1.2 领域层、本地接入与 development 验收
 
 M1.2-A 已可由 Node/Vitest 验证：输入白名单、HMAC 算法与环境隔离、响应字段投影、
 CurrentUserView 状态限制、内存原子事务、50 路并发、三次冲突退避、政策原子/幂等、
@@ -164,14 +164,32 @@ M1.2-B local 自动验证：
 - 三个函数包能构建、加载 `main`，且部署产物不依赖函数目录外文件；在系统临时目录
   `npm ci --omit=dev` 后可脱离仓库根 `node_modules` 加载，并已用 Node 20.19.6 验证。
 
-以下必须标记 `NEEDS_VALIDATION`，不能由 fake database 或可加载部署包替代：
+M1.2-B development 已验证：
 
-- 三个函数在 development 的实际部署和调用。
-- 关联 AppID 后 `getWXContext()` 的真实 OpenID/APPID 形状及失败行为。
-- 服务端环境变量注入、四环境密钥隔离和日志/控制台脱敏。
-- `users` 与 `identity_mappings` 的真实跨文档事务、写冲突错误识别与三次退避。
-- 数据库规则拒绝客户端直读/直写、真实索引/配额/冷启动行为。
-- 微信开发者工具编译、双账号并发、iPhone/Android 身份冒烟和未配置环境降级复验。
+- 三个函数从关联小程序真实调用成功；App 启动不自动调用身份函数。
+- HMAC Secret 完成 development 轮换，三个函数使用同一新值；Secret 未进入仓库、
+  日志、截图或验收记录。
+- 干净 `users=0`、`identity_mappings=0` 状态的首次 `authEnsureUser ×20`：
+  20 次成功、0 次失败、一个不同 userId，最终数据库只有一个 user 和一个 mapping。
+- `authEnsureUser ×5`、`accountGetMe`、CurrentUserView 白名单、
+  `accountAcceptPolicies ×2` 和 `v1/v1` 政策幂等均通过，第二次确认
+  `replayed=true`，用户状态未改变。
+- mapping 指向存在的 user，正文符合契约且不含原始 OpenID；后续身份和政策验收不增加
+  user/mapping 数量。
+- 客户端对 `users`、`identity_mappings` 的 read/write 四项均被
+  `DATABASE_PERMISSION_DENIED` 拒绝；两个集合保持所有客户端不可读写。
+- 三个函数最新真实日志不含 OpenID、identityKey、HMAC Secret、完整 Error、stack 或
+  临时排障输出。
+- development 三个现有函数实际运行 `Nodejs16.13`，按 ADR-032 接受为 development
+  偏差；该结果不能替代 staging/production 的目标 Runtime 验收。
+
+以下为 `DEFERRED_VALIDATION`，不阻塞 M1-02：
+
+- RESTRICTED 与 DELETED 的真实数据库状态测试；对应领域行为已由自动测试覆盖。
+- iPhone/Android 不同微信账号 smoke；完整双端验收保留给后续 staging/真机里程碑。
+- 真实平台精确 `DATABASE_TRANSACTION_CONFLICT` 错误对象和退避日志观察；当前干净首次
+  20 路并发的唯一结果已通过。
+- staging/production 前重新执行 SDK advisory 审计，升级已修复的官方 SDK 或重新评估。
 
 ## 8. 页面状态测试
 

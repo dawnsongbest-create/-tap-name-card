@@ -5,6 +5,9 @@
 > M1.2-A 审查结论：`PASS`  
 > 整体 M1-02 状态：`IN_REVIEW`，等待 M1.2-B development CloudBase 验收
 
+> 历史快照说明：上述整体状态是 2026-07-25 M1.2-A 关门时的结论。M1.2-B 后续已完成，
+> 当前最终状态见 [`M1_2_FINAL_CLOSEOUT.md`](./M1_2_FINAL_CLOSEOUT.md)：M1-02 `DONE`。
+
 ## 1. 范围与基线
 
 本次只审查和修复 M1.2-A，不包含真实微信身份适配、CloudBase 环境连接、集合创建、
