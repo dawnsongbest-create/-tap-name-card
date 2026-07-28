@@ -8,6 +8,11 @@ import type {
 } from '../shared/types/auth';
 import type { CloudFunctionCaller, CloudFunctionResult } from '../shared/types/cloud-function';
 import type { RequestIdProvider } from '../shared/types/request-id';
+import {
+  parseAccountAcceptPoliciesOutput,
+  parseAccountGetMeOutput,
+  parseAuthEnsureUserOutput,
+} from '../shared/validation/auth-output';
 
 export interface AuthApi {
   ensureUser(): Promise<CloudFunctionResult<AuthEnsureUserOutput>>;
@@ -24,18 +29,21 @@ export function createAuthApi(caller: CloudFunctionCaller, requestIds: RequestId
         name: 'authEnsureUser',
         input: {},
         requestId: requestIds.create(),
+        parseOutput: parseAuthEnsureUserOutput,
       }),
     getMe: () =>
       caller.call<AccountGetMeInput, AccountGetMeOutput>({
         name: 'accountGetMe',
         input: {},
         requestId: requestIds.create(),
+        parseOutput: parseAccountGetMeOutput,
       }),
     acceptPolicies: (input) =>
       caller.call<AccountAcceptPoliciesInput, AccountAcceptPoliciesOutput>({
         name: 'accountAcceptPolicies',
         input,
         requestId: requestIds.create(),
+        parseOutput: parseAccountAcceptPoliciesOutput,
       }),
   };
 }

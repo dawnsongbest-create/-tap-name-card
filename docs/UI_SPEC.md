@@ -1,6 +1,6 @@
 # 「碰一下名牌」页面与交互规格
 
-> 版本：M0 v1.1（第二轮 Review）｜日期：2026-07-24｜状态：`IN_REVIEW`  
+> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：基础设施已同步
 > 页面范围：P01—P26；P08 为 P1，P26 为 P2，P0 中均隐藏。  
 > 关联：[范围](./MVP_SCOPE.md)｜[API](./API_SPEC.md)｜[测试](./TEST_PLAN.md)
 
@@ -13,6 +13,27 @@
 - 写操作按钮进入 loading 并防重复；超时显示“正在确认结果”，先查详情/列表后再允许重试。
 - 全局无障碍：安全区域、键盘避让、足够点击区、文字放大不溢出、对比度、不只靠颜色、图片替代描述、减少动态效果。
 - 文案温和、中性，不使用“匹配成功、被拒绝、人气、粉丝、访客”等词。
+
+### 1.1 M1.3 共享 PageState 基础
+
+M1.3 提供以下 canonical PageState：
+
+- `ready`
+- `loading`
+- `empty`
+- `network-error`
+- `forbidden`
+- `not-found`
+- `unavailable`
+
+只有适合人工重新读取的 `network-error` 和 canonical `unavailable` 显示 Retry。retry 是
+UI intent only；组件不得自行发起网络、CloudBase 或身份请求。unknown/invalid input
+显示本地安全的 unavailable-looking fallback，但必须 `showRetry=false`，不得反射原输入
+或产生业务 intent。
+
+`ErrorCode` 与 PageState 不等价，页面/业务层按上下文决定展示状态。该组件是最小共享
+基础，不是完整产品 UI、全局 skeleton 或 operation-state system。下面页面规格中的骨架、
+timeout、结果确认、P25 登录引导和领域状态仍由首次真实消费者 Sprint 实现。
 
 ## 2. 页面规格
 

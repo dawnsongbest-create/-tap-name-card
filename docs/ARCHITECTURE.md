@@ -1,9 +1,9 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
+> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：`DONE`
 >
-> 约束：M1.2 身份领域层、CloudBase 平台适配和真实 development 主链路已通过验收；
-> RESTRICTED/DELETED 真实状态、双端双账号、精确平台冲突错误和 SDK 上线风险保留为后续验证。
+> 约束：M1.2 身份主链路和 M1.3 客户端响应安全/PageState 基础已通过验收；
+> M1.2 deferred validations 与 M1.3 deferred capabilities 不阻塞各自 closeout。
 >
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
 
@@ -30,7 +30,7 @@
     │
     ▼
 微信原生小程序（WXML/WXSS/TypeScript/原生组件/Canvas 2D）
-    │ 统一调用层：requestId、运行时校验、错误映射、重试/结果查询
+    │ 当前调用层：requestId、运行时响应校验、错误映射、endpoint DTO 白名单
     ▼
 微信云开发 / CloudBase
     ├─ 云函数：身份、权限、状态机、事务、幂等、字段过滤
@@ -56,7 +56,41 @@
 | `templates/`  | 版本化模板注册、渲染描述、安全默认模板              | 用户上传 CSS/JS/字体               |
 | `utils/`      | 时间、Token 展示、文本/图片辅助                     | 隐式业务规则                       |
 
-页面状态统一为 `LOADING | READY | EMPTY | NETWORK_ERROR | FORBIDDEN | NOT_FOUND | REVIEWING | HIDDEN | UNAVAILABLE | RATE_LIMITED`；操作另有 `IDLE | SUBMITTING | SUCCEEDED | FAILED | UNKNOWN_AFTER_TIMEOUT`。超时后先查事实，再重试。
+M1.3 共享 PageState 仅包含：
+
+`ready | loading | empty | network-error | forbidden | not-found | unavailable`
+
+`network-error` 和 canonical `unavailable` 可显示 Retry，组件只发出 `retry` UI intent，
+不直接请求网络或身份服务。unknown/invalid input 使用
+`kind=unavailable`、`isError=true`、`showRetry=false` 的本地安全 fallback。
+
+`REVIEWING/HIDDEN/RATE_LIMITED` 等领域页面状态由真实产品页面按需扩展；
+`IDLE/SUBMITTING/SUCCEEDED/FAILED/UNKNOWN_AFTER_TIMEOUT` operation state 尚未实现。
+`ErrorCode` 与 PageState 是不同层次的概念，不建立全局一一映射。
+
+### 3.1 客户端远端响应安全边界
+
+请求链：
+
+```text
+business service
+→ CloudFunctionCaller
+→ wx.cloud.callFunction
+```
+
+响应链：
+
+```text
+unknown remote response
+→ CloudFunctionResult envelope validation
+→ endpoint-specific success DTO parser
+→ whitelist DTO
+→ application state
+```
+
+业务代码不得直接信任远端 TypeScript generic 或 `as T`。envelope、`success`、
+`requestId`、failure error 和 endpoint success data 都必须在运行时验证；远端未知字段、
+`message/details/stack` 和 SDK 内部字段不得进入客户端安全结果、业务 state 或 UI。
 
 ## 4. 云开发服务端分层
 
@@ -88,6 +122,9 @@
 - `shared/constants`：状态、限制默认值的键名；实际频率/冷却/最大名牌数从服务端配置读取。
 
 共享类型是编译期契约，运行时校验是安全边界，两者缺一不可。
+
+根 `shared/` 仍是唯一 shared source。`miniprogram/shared/` 与
+`cloudfunctions/shared/contracts/` 是同步工具生成的运行时镜像，不得手工维护。
 
 ## 6. 模板与渲染
 
@@ -174,16 +211,22 @@
 ## 13. 错误、重试与降级
 
 - 云函数只返回 `CloudFunctionResult<T>`；内部异常映射为安全错误码。
-- 自动重试仅用于可安全重放的读操作或带幂等键的写操作，使用有限退避。
-- 写超时标为“结果未知”，先用查询接口确认，不盲目二次提交。
+- M1.3 客户端先运行时验证远端 envelope，再使用 endpoint parser 白名单重建 DTO；
+  malformed response fail closed，远端错误内容不透传。
+- M1.3 PageState 的 Retry 只是人工 UI intent，不包含请求执行、自动重试或退避。
+- 自动重试、timeout、写操作 `UNKNOWN_AFTER_TIMEOUT` 与 operation state 推迟到首次真实
+  读写消费者 Sprint；届时写超时必须先查事实，不能盲目二次提交。
 - 上传失败保留本地文件；审核失败定位字段/图片类别；AI 不阻塞；小程序码失败允许无码；缓存失败回源。
-- 页面必须覆盖加载、空、网络失败、无权限、不存在、审核中、隐藏、频率限制和内容不可用。
+- 未来产品页面仍须覆盖适用的加载、空、网络失败、无权限、不存在、审核中、隐藏、
+  频率限制和内容不可用状态；M1.3 没有提前建立完整产品状态系统。
 
 ## 14. 日志与埋点
 
 服务端日志字段：`requestId`、函数、环境、内部用户 ID（脱敏/受控）、资源 ID、幂等键摘要、前后状态、结果码、耗时；不得记录完整 OpenID、联系方式、二维码原图、密钥、完整 AI 输入或响应堆栈。
 
 客户端埋点使用 PRD 第 36 章事件；匿名 `public_card_opened` 仅做汇总来源，不建立可供主人查询的访客身份记录。安全审计和产品分析分开存储与授权。
+
+上述埋点是后续产品能力的目标约束；M1.3 未实现 analytics 基础设施。
 
 ## 15. 环境与密钥
 
@@ -201,7 +244,7 @@ AppID 和 EnvId 是环境标识，允许提交；AppSecret、HMAC/AI Key 仅在�
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 当前仓库树（M1.2 final）
+## 16. 当前仓库树（M1.3 final）
 
 ```text
 tap-name-card/
@@ -241,10 +284,16 @@ tap-name-card/
    ├─ TASKS.md DECISIONS.md
 ```
 
-M1.2-B 在 M1.2-A 身份领域层上增加平台适配，并已完成真实 development 验收：
+M1.2-B 在 M1.2-A 身份领域层上增加平台适配并完成真实 development 验收；M1.3 在不改
+三个服务端身份 contract/逻辑和不部署 CloudBase 的前提下增加客户端安全边界：
 
 - `pages/foundation` 明确标记为工程初始化页，不是正式 P02 首页或产品原型。
-- `components/page-state` 只演示 Loading、Empty、Error 和 Retry 最小接口；完整页面状态体系仍属于后续 Sprint。
+- `components/page-state` 提供七种 canonical PageState、两种安全可重试状态和 unknown
+  无 action fallback；组件只产生 retry UI intent。完整产品页面/operation-state
+  体系仍属于后续 Sprint。
+- `services/cloud.ts` 将未知远端值归一化为运行时验证后的安全
+  `CloudFunctionResult`；三个身份 client endpoint 分别用 success DTO parser 白名单重建
+  `CurrentUserView` 或政策确认结果。
 - `cloudfunctions/` 有 CloudBase Repository、可信上下文适配和三个 `exports.main` 构建入口；
   `esbuild` 将内部 shared 源打进每个 `index.js`，部署包不跨函数目录引用。
 - development 显式启用真实 EnvId；local/staging/production 关闭。App 启动只初始化

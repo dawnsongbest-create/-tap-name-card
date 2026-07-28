@@ -1,4 +1,4 @@
-import { getPageStateViewModel, type PageStateViewModel } from './model';
+import { emitPageStateRetryIntent, getPageStateViewModel, type PageStateViewModel } from './model';
 
 Component({
   properties: {
@@ -29,7 +29,7 @@ Component({
   },
   methods: {
     onRetry() {
-      this.triggerEvent('retry');
+      emitPageStateRetryIntent((eventName) => this.triggerEvent(eventName));
     },
   },
 });

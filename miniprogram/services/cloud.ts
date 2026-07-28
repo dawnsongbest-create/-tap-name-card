@@ -5,18 +5,9 @@ import type {
   CloudFunctionResult,
 } from '../shared/types/cloud-function';
 import type { EnvironmentConfig } from '../shared/types/environment';
-import type { ErrorCode } from '../shared/errors/error-code';
+import { isErrorCode } from '../shared/errors/error-code';
+import type { RuntimeParser } from '../shared/validation/runtime';
 
-const SAFE_ERROR_CODES: ReadonlySet<ErrorCode> = new Set([
-  'AUTH_REQUIRED',
-  'ACCOUNT_RESTRICTED',
-  'ACCOUNT_DELETED',
-  'USER_NOT_FOUND',
-  'POLICY_VERSION_UNSUPPORTED',
-  'INVALID_INPUT',
-  'SERVICE_UNAVAILABLE',
-  'UNKNOWN_ERROR',
-]);
 const SAFE_REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/u;
 
 export interface MiniProgramCloudApi {
@@ -38,13 +29,10 @@ function isRequestId(value: unknown): value is string {
   return typeof value === 'string' && SAFE_REQUEST_ID_PATTERN.test(value);
 }
 
-function isErrorCode(value: unknown): value is ErrorCode {
-  return typeof value === 'string' && SAFE_ERROR_CODES.has(value as ErrorCode);
-}
-
 function normalizeCloudFunctionResult<T>(
   value: unknown,
   fallbackRequestId: string,
+  parseOutput: RuntimeParser<T>,
 ): CloudFunctionResult<T> {
   if (!isRecord(value) || typeof value.success !== 'boolean') {
     return createFailureResult<T>('SERVICE_UNAVAILABLE', fallbackRequestId);
@@ -53,18 +41,27 @@ function normalizeCloudFunctionResult<T>(
   const requestId = isRequestId(value.requestId) ? value.requestId : fallbackRequestId;
 
   if (value.success) {
-    if (!('data' in value)) {
+    if (!('data' in value) || 'error' in value) {
       return createFailureResult<T>('SERVICE_UNAVAILABLE', requestId);
     }
 
-    return {
-      success: true,
-      data: value.data as T,
-      requestId,
-    };
+    try {
+      return {
+        success: true,
+        data: parseOutput(value.data),
+        requestId,
+      };
+    } catch {
+      return createFailureResult<T>('SERVICE_UNAVAILABLE', requestId);
+    }
   }
 
-  if (!isRecord(value.error) || !isErrorCode(value.error.code)) {
+  if (
+    'data' in value ||
+    !isRecord(value.error) ||
+    !isErrorCode(value.error.code) ||
+    typeof value.error.message !== 'string'
+  ) {
     return createFailureResult<T>('SERVICE_UNAVAILABLE', requestId);
   }
 
@@ -74,7 +71,7 @@ function normalizeCloudFunctionResult<T>(
 export function createUnconfiguredCloudFunctionCaller(): CloudFunctionCaller {
   return {
     call<TInput, TOutput>(
-      request: CloudFunctionRequest<TInput>,
+      request: CloudFunctionRequest<TInput, TOutput>,
     ): Promise<CloudFunctionResult<TOutput>> {
       return Promise.resolve(
         createFailureResult<TOutput>('SERVICE_UNAVAILABLE', request.requestId),
@@ -102,7 +99,7 @@ export function initializeCloudForEnvironment(
 export function createWxCloudFunctionCaller(cloudApi: MiniProgramCloudApi): CloudFunctionCaller {
   return {
     async call<TInput, TOutput>(
-      request: CloudFunctionRequest<TInput>,
+      request: CloudFunctionRequest<TInput, TOutput>,
     ): Promise<CloudFunctionResult<TOutput>> {
       try {
         const response = await cloudApi.callFunction({
@@ -113,7 +110,11 @@ export function createWxCloudFunctionCaller(cloudApi: MiniProgramCloudApi): Clou
           },
         });
 
-        return normalizeCloudFunctionResult<TOutput>(response.result, request.requestId);
+        return normalizeCloudFunctionResult(
+          response.result,
+          request.requestId,
+          request.parseOutput,
+        );
       } catch {
         return createFailureResult<TOutput>('SERVICE_UNAVAILABLE', request.requestId);
       }

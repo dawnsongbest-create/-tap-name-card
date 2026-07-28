@@ -1,6 +1,6 @@
 # 「碰一下名牌」云函数 API 规格
 
-> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
+> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：`DONE`
 > 本文定义逻辑契约，不声明任何未验证的微信/CloudBase API 名称。  
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[UI](./UI_SPEC.md)｜[测试](./TEST_PLAN.md)
 
@@ -54,6 +54,32 @@ interface SharedContact extends ContactSummary { value?: string; fileUrl?: strin
 所有输入先做运行时校验；所有时间、身份和状态由服务端决定。登录接口从可信调用上下文取身份，不接受客户端传 `ownerId/openId`。默认日志字段：`requestId,function,environment,actorId,resourceIds,fromState,toState,resultCode,durationMs`；仅有 operationId 的业务接口可额外记录其摘要。不得记录 OpenID、联系人明文、二维码、密钥、完整 AI 输入或内部堆栈。
 
 频率使用服务端配置。表中的“常规”表示仍有全局防刷；“严格”表示按用户、目标和时间窗限制。所有 P0 写操作至少测试：成功、鉴权/所有权、非法输入、状态前置、拉黑、重复/并发、存储失败、响应字段过滤。客户端失败统一映射安全文案；未知写结果先查状态再重试。
+
+### 1.1 M1.3 客户端消费边界
+
+服务端 `CloudFunctionResult<T>` wire contract 未改变。客户端不得仅依赖 TypeScript
+generic/cast，必须在远端结果进入业务 state 前依次验证：
+
+1. response 是非数组 object，且 envelope 字段组合合法；
+2. `success` 是 boolean；
+3. `requestId` 是合法 string；
+4. success envelope 的 `data` 存在且通过 endpoint-specific success DTO parser；
+5. failure envelope 的 `error.code` 是 canonical `ErrorCode`；
+6. failure envelope 的 `error.message` 存在且是 string。
+
+验证 `error.message` 的存在和类型不代表信任其内容。客户端必须丢弃远端
+`message/details/stack`、SDK 原始异常和其他未知字段，使用 canonical 本地安全文案。
+任何 endpoint success parser 都通过白名单重建 DTO，未知额外字段不得进入业务 DTO/state。
+
+现有三个身份 endpoint 分别提供 parser：
+
+- `authEnsureUser` → `CurrentUserView`
+- `accountGetMe` → `CurrentUserView`
+- `accountAcceptPolicies` → `{user: CurrentUserView, replayed: boolean}`
+
+即使远端返回 `openId`、`identityKey` 或内部时间字段，也不得进入上述客户端 DTO。
+malformed envelope 或 malformed success data 必须 fail closed，且不得调用/接受 success
+parser 的输出。
 
 ## 2. 账号与模板
 
@@ -278,6 +304,10 @@ interface GreetingView {
 | `USER_BLOCKED/FORBIDDEN` | 清除敏感缓存，解释当前不能互动，不透露谁拉黑谁 |
 | 码/图片 | 小程序码失败允许无码图片；保存失败提供授权说明与重试 |
 | 服务不可用 | 保留本地草稿/表单，显示温和文案和明确重试 |
+
+本节包含后续产品 Sprint 的目标行为。M1.3 只实现 runtime response safety boundary 和
+人工 retry UI intent；timeout、automatic retry、backoff、结果未知查询与 operation state
+尚未实现，推迟到首次真实读写消费者 Sprint。
 
 ## 12. 契约覆盖检查
 

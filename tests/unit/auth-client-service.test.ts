@@ -10,12 +10,18 @@ import type {
 import type { RequestIdProvider } from '../../shared/types/request-id';
 
 class RecordingCloudFunctionCaller implements CloudFunctionCaller {
-  readonly requests: CloudFunctionRequest<unknown>[] = [];
+  readonly requests: Array<Omit<CloudFunctionRequest<unknown, unknown>, 'parseOutput'>> = [];
+  readonly outputParsers: Array<(value: unknown) => unknown> = [];
 
   call<TInput, TOutput>(
-    request: CloudFunctionRequest<TInput>,
+    request: CloudFunctionRequest<TInput, TOutput>,
   ): Promise<CloudFunctionResult<TOutput>> {
-    this.requests.push(request);
+    this.requests.push({
+      name: request.name,
+      input: request.input,
+      requestId: request.requestId,
+    });
+    this.outputParsers.push(request.parseOutput);
     return Promise.resolve(createFailureResult<TOutput>('SERVICE_UNAVAILABLE', request.requestId));
   }
 }
@@ -61,5 +67,6 @@ describe('client auth service boundary', () => {
     expect(serializedRequests).not.toContain('openId');
     expect(serializedRequests).not.toContain('userId');
     expect(serializedRequests).not.toContain('operationId');
+    expect(caller.outputParsers).toHaveLength(3);
   });
 });

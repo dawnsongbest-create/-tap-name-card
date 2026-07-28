@@ -20,12 +20,17 @@
   </view>
 
   <view class="foundation__section">
-    <view class="foundation__section-title">基础页面状态</view>
+    <view class="foundation__section-title">M1.3-B 基础页面状态</view>
     <view class="foundation__state-list">
+      <page-state kind="ready"></page-state>
       <page-state kind="loading"></page-state>
       <page-state kind="empty"></page-state>
-      <page-state kind="error"></page-state>
-      <page-state kind="retry" bind:retry="onRetry"></page-state>
+      <page-state kind="network-error" bind:retry="onRetry"></page-state>
+      <page-state kind="forbidden"></page-state>
+      <page-state kind="not-found"></page-state>
+      <page-state kind="unavailable" bind:retry="onRetry"></page-state>
+      <view class="foundation__request-id">非法状态安全回退</view>
+      <page-state kind="unsupported-foundation-demo"></page-state>
     </view>
     <view class="foundation__retry-count">重试示例触发次数：{{retryCount}}</view>
   </view>

@@ -2,12 +2,20 @@
 
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
-当前仓库已完成 **M1.2 云环境与身份**：共享身份契约、服务端 HMAC 身份键、
+当前状态：M1.1、M1.2、M1.3 均为 `DONE`；M1.4 为 `NOT_STARTED`。
+
+M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
 CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
 客户端 `wx.cloud` 初始化/调用、本地自动测试和真实 development 验收均已通过。development
 已部署 `authEnsureUser`、`accountGetMe`、`accountAcceptPolicies`，并创建客户端不可读写的
-`users` 与 `identity_mappings`。M1-02 状态为 `DONE`；M1.3 尚未开始，名牌、模板、收藏、
-认识请求、相遇、联系方式、AI 和 NFC 均未实现。
+`users` 与 `identity_mappings`。
+
+M1.3 已建立客户端远端响应运行时安全边界和最小 PageState 基础：运行时响应校验、
+三个身份 endpoint 的 success DTO parser、canonical `ErrorCode` 运行时边界、安全
+`CloudFunctionResult` normalization、七种 canonical PageState，以及只表达用户意图的
+retry 事件。当前自动测试基线为 23 个测试文件、161 项测试。M1.3 没有新增 CloudBase
+部署、集合或服务端函数；名牌、模板、收藏、认识请求、相遇、联系方式、AI 和 NFC
+仍未实现。
 
 ## 环境要求
 
@@ -58,7 +66,8 @@ development 三个现有函数实际运行 `Nodejs16.13`，这是 ADR-032 限定
 3. 确认小程序目录识别为 `miniprogram/`。
 4. 确认开发者工具已关联 development 环境。
 5. 编译后应看到工程身份基础页。
-6. 页面应展示 development 已配置提示、四种基础状态和手动身份探针。
+6. 页面应展示 development 已配置提示、七种基础 PageState、安全非法状态 fallback、
+   两种可重试状态和手动身份探针。
 
 `project.config.json`、原生 TypeScript、页面注册与两套根目录识别已在 M1.1/M1.2-A
 微信开发者工具人工验收中通过。若开发者工具后续调整或移除字段，应重新验证并记录到
@@ -67,6 +76,7 @@ development 三个现有函数实际运行 `Nodejs16.13`，这是 ADR-032 限定
 ## 本地验证
 
 ```powershell
+npm.cmd run shared:check
 npm.cmd run format:check
 npm.cmd run lint
 npm.cmd run typecheck
@@ -75,7 +85,8 @@ npm.cmd run cloudfunctions:check
 npm.cmd run cloudfunctions:check:isolated
 ```
 
-这些命令必须真实执行。命令存在不代表检查通过。
+这些命令必须真实执行。命令存在不代表检查通过。M1.3 closeout 基线为 23 个测试文件、
+161 项测试。
 `cloudfunctions:check:isolated` 会在系统临时目录按各函数锁文件安装生产依赖、检查完整
 依赖树并加载入口；它不连接或部署 CloudBase。
 
@@ -102,7 +113,8 @@ npm.cmd run shared:sync
 - `cloudfunctions/`：身份领域层、微信可信身份、CloudBase 事务适配和三个可独立构建的云函数入口。
 - `shared/`：公共定义和工具的唯一源。
 - `tools/`：共享契约同步、云函数构建与部署边界检查脚本。
-- `tests/`：M1.1 单元测试及 M1.2 身份单元、本地集成和 development-only 验收工具测试。
+- `tests/`：M1.1 工程测试、M1.2 身份测试，以及 M1.3 runtime boundary、DTO parser、
+  PageState 和 development-only 验收工具测试。
 - `docs/`：产品、架构、测试和任务基线。
 
 ## 换一台 Windows 电脑继续

@@ -491,3 +491,38 @@
     <https://nodejs.org/api/crypto.html>
   - CloudBase Node SDK：
     <https://www.npmjs.com/package/@cloudbase/node-sdk>
+
+## ADR-033 M1.3 只建设 M2.1 必需的最小共享基础设施
+
+- 状态：`ACCEPTED`
+- 日期：2026-07-28
+- 决策人：产品负责人、技术负责人
+- 背景：原路线图把统一结果、校验、调用、日志、配置、analytics、页面状态、登录引导、
+  skeleton、retry 和 operation state 都列入 M1.3。当前没有消费者能验证其中多数抽象；
+  一次建设“完整通用基础设施平台”会扩大回归面，并可能提前固化错误的领域接口。
+- 决策：
+  - M1.3-A 只建立客户端 runtime response safety boundary：
+    `CloudFunctionResult` envelope runtime validation、canonical `ErrorCode`、requestId、
+    endpoint-specific success DTO parser 和 whitelist projection。
+  - M1.3-B 只建立七种 canonical PageState 和人工 retry UI intent。unknown/invalid
+    使用 unavailable-looking、`showRetry=false` 的无 action 安全 fallback。
+  - 三个 M1.2 身份云函数 wire contract 与服务端实现保持不变；M1.3 不新增 CloudBase
+    部署、集合、权限、环境变量、Secret 或 Runtime 变更。
+  - 采用 YAGNI / first real consumer 原则：没有真实消费者的基础设施不提前泛化。
+- 明确延后：
+  - analytics：推迟到出现真实产品事件和同意/隐私边界的 Sprint；
+  - timeout、automatic retry、exponential backoff、`UNKNOWN_AFTER_TIMEOUT` 和 operation
+    state：推迟到出现真实读写操作、尤其是需要结果确认的写操作 Sprint；
+  - skeleton system：推迟到真实页面布局和加载层级确定后；
+  - P25 login prompt：推迟到首次匿名用户主动互动流程；
+  - cloud-function middleware abstraction：推迟到出现多个真实领域函数并能证明共同
+    middleware 边界后；
+  - Template/Card/Greeting/Encounter/Contact schema：由各领域首次消费者 Sprint 建立；
+  - staging integration：仍属于 M1.4。
+- 替代：在 M1.3 一次完成 analytics、retry engine、timeout、operation state、middleware、
+  skeleton 和登录引导；该方案因无真实消费者、回归面过大而拒绝。
+- 后果：M1.3 消除了 M2.1 的共享安全边界 blocker；M2.1 仍必须等待 M1.4 等既有依赖完成
+  并获得独立批准。每项 deferred 能力在首次真实需求出现时重新做 Scope/DoD；deferred
+  是有意排期，不是 M1.3 blocker 或未偿还的实现承诺。
+- 验证：M1.3-A、M1.3-B 均完成 Implementation、Independent Review、Fix/Re-Review、
+  自动门禁和人工验收；最终基线为 23 个测试文件、161 项测试。

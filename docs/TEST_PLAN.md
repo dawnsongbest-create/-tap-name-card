@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
+> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：`DONE`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -191,7 +191,42 @@ M1.2-B development 已验证：
   20 路并发的唯一结果已通过。
 - staging/production 前重新执行 SDK advisory 审计，升级已修复的官方 SDK 或重新评估。
 
+### 7.5 M1.3 客户端安全边界与 PageState
+
+M1.3-A 自动覆盖：
+
+- 最小 runtime primitives：object、string、number、boolean、enum、optional 和白名单 projection；
+- `CloudFunctionResult` envelope、`success`、`requestId`、success data、failure
+  `error.code/error.message`；
+- null、array、primitive、字段缺失/类型错误、互斥字段并存、未知错误码和非法 requestId
+  的 malformed-envelope matrix；
+- 三个身份 endpoint output parser、`CurrentUserView` 白名单和恶意额外字段丢弃；
+- canonical `ErrorCode`、本地安全错误文案、远端 message/details/stack 不透传；
+- parser 使用小程序运行时镜像的 platform boundary。
+
+M1.3-B 自动覆盖：
+
+- 七种 canonical PageState；
+- 仅 `network-error` 和 canonical `unavailable` 显示 Retry；
+- unknown/invalid 使用 `kind=unavailable`、`showRetry=false` 的不反射、无 action fallback；
+- retry 每次只发出一个 UI intent，组件不拥有请求行为；
+- Foundation 七状态/非法状态验证入口；
+- M1.2 development-only 验收工具保持存在；
+- App cold start 只初始化 CloudBase，不自动调用身份函数或建号。
+
+最终自动基线：23 个测试文件、161 项测试。
+
+M1.3 人工验收：
+
+- M1.3-A：真实 development `ensureUser/getMe/policy/replay` 和 identity/policy automatic
+  validation 的现有 wire response compatibility，`PASS`。
+- M1.3-B：微信开发者工具七状态、retry 可见性、非法安全 fallback、一次点击一个 intent、
+  匿名启动和 M1.2 工具保留，`PASS`。
+
 ## 8. 页面状态测试
+
+M1.3 已验证共享七状态和最小 retry intent。以下 P01—P25 领域状态、骨架、timeout、
+operation state 和完整产品页面矩阵属于后续产品 Sprint，不由 M1.3 closeout 宣称完成。
 
 P01—P07、P09—P25 对适用状态逐项测试：
 

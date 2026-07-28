@@ -1,10 +1,10 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：M1-02 `DONE`
+> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：M1-03 `DONE`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01、M1-02 为 `DONE`；M1-03 及以后未开始。
+> 当前规则：M0 已人工通过；M1-01、M1-02、M1-03 为 `DONE`；M1-04 及以后未开始。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -82,11 +82,21 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 ### M1-03 共享基础设施
 
 - 元数据：M1｜M1.3｜P0｜依赖 M1-02。
-- 范围：统一结果、校验、错误、调用、日志、配置、埋点接口、页面状态组件；不做领域流程。
-- 目录：`shared/*`、`miniprogram/services|components|state`、`cloudfunctions/shared`；集合无新增；函数共用中间层；页面状态全局。
-- 验收：错误不泄漏、网络可重试、互动才登录、脱敏日志。
-- 测试：错误映射/Schema/状态组件；弱网手工；双平台组件冒烟。
-- 风险：共享包构建边界。状态：`NOT_STARTED`。
+- 范围：客户端 runtime response safety boundary 和最小七状态 PageState；不做领域流程、
+  analytics、timeout/自动重试、operation state、skeleton、P25 login prompt 或 middleware。
+- 目录：根 `shared/errors|types|validation` 唯一源及两个生成镜像、
+  `miniprogram/services/cloud.ts|auth.ts`、`components/page-state`、Foundation 验收入口和测试；
+  集合/云函数无新增，三个身份云函数服务端 contract/逻辑不变。
+- 验收：远端 envelope/requestId/error/success data 均运行时验证；三个身份 endpoint 使用
+  白名单 DTO parser；远端私有/错误字段不进入 state/UI；七种 PageState、正确 retry
+  可见性和 unknown 无 action fallback；匿名启动不自动建号。
+- 自动测试：runtime primitives、malformed envelope matrix、canonical ErrorCode、安全错误、
+  三个 endpoint parser、恶意额外字段、requestId、七状态、retry intent、Foundation、
+  M1.2 工具保留和匿名启动；最终 23 个文件、161 项测试，完整门禁通过。
+- 手工测试：真实 development 身份 response compatibility `PASS`；微信开发者工具
+  page-state/retry/invalid fallback/匿名启动与 M1.2 工具保留 `PASS`。
+- 风险：shared 镜像漂移由 `shared:check` 阻止；NaN 独立 case 为 Final Review
+  LOW/non-blocking。状态：`DONE`。
 
 ### M1-04 M1 验收与 staging 接入
 

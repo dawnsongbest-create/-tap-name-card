@@ -1,7 +1,7 @@
 # 「碰一下名牌」MVP Development Plan
 
-> **文档版本：1.0**  
-> **日期：2026-07-24**  
+> **文档版本：M1.3 final v1.0**
+> **日期：2026-07-28**
 > **状态：面向 Codex 的正式开发执行计划**  
 > **唯一产品事实来源：`docs/PRD.md`**  
 > **适用阶段：M0—M5**
@@ -42,7 +42,7 @@
 - mock、占位实现和真实平台能力必须显式区分；
 - 未真机验证的能力不能声明为已完成。
 
-## 1.3 当前架构基线
+## 1.3 当前架构基线（M1.3 final）
 
 ### 客户端
 
@@ -52,10 +52,13 @@
 - WXSS；
 - 原生组件；
 - Canvas 2D；
-- 统一状态管理；
-- 统一云函数调用层；
-- 统一错误映射；
-- 统一页面状态组件。
+- CloudBase 调用集中在 `CloudFunctionCaller`；
+- 远端 envelope、requestId、错误码及 endpoint success DTO 的运行时校验；
+- 未知远端字段不会进入客户端业务 DTO/state；
+- 七种 canonical PageState 和显式 retry UI intent。
+
+尚未建立统一产品状态管理、analytics、timeout/自动重试、operation state、登录引导、
+骨架屏系统或 cloud-function middleware；这些能力按首次真实消费者 Sprint 决定。
 
 ### 服务端
 
@@ -251,6 +254,8 @@ tap-name-card/
 
 - 客户端与云函数共享领域类型；
 - 每个云函数输入都必须有运行时校验；
+- 客户端不得仅依赖 TypeScript generic/cast 信任远端响应；envelope 和 endpoint success
+  DTO 必须先通过运行时校验；
 - 每个名牌模块必须有具体类型和校验器；
 - 未验证的 `Record<string, unknown>` 不得直接写入数据库；
 - 枚举值统一集中定义，禁止页面各自复制字符串。
@@ -274,6 +279,10 @@ interface CloudFunctionResult<T> {
 ```
 
 内部异常不得直接返回客户端。
+
+客户端消费 `CloudFunctionResult<T>` 时必须验证 envelope、`success`、`requestId`、
+成功 `data`、失败 `error.code` 和 `error.message`。通过 endpoint parser 白名单重建
+success DTO；远端未知字段和远端 `message/details/stack` 不进入客户端安全结果或 UI。
 
 ## 5.3 幂等
 
@@ -521,9 +530,22 @@ interface CloudFunctionResult<T> {
 
 ## Sprint M1.3：共享基础设施
 
-范围：统一返回、错误码、请求封装、日志、配置、埋点接口、页面状态组件、登录引导、骨架屏、空状态、错误状态和重试。
+最终范围仅包含：
 
-验收：页面不展示内部错误，云函数错误映射正确，网络失败可重试，登录引导只在互动时出现，组件有测试。
+1. 客户端 runtime response safety boundary：验证 `CloudFunctionResult` envelope、canonical
+   `ErrorCode`、requestId 和 endpoint success data；三个现有身份 endpoint 使用白名单
+   DTO parser，远端内部字段和错误内容不进入业务 state/UI。
+2. 最小 PageState 基础：`ready/loading/empty/network-error/forbidden/not-found/unavailable`；
+   只有 `network-error` 和 canonical `unavailable` 显示 Retry，组件只发出 UI intent；
+   unknown/invalid 使用 `kind=unavailable`、`showRetry=false` 的无 action 安全 fallback。
+
+明确延后：analytics、timeout、automatic retry、exponential backoff、
+`UNKNOWN_AFTER_TIMEOUT`、operation state、skeleton、P25 login prompt 和
+cloud-function middleware abstraction。按 YAGNI 原则推迟到首次真实消费者 Sprint。
+
+验收：客户端不信任远端 TypeScript cast；malformed response fail closed；DTO 只包含白名单
+字段；远端错误不透传；匿名启动不自动建号；七种 PageState、retry 可见性和非法状态
+fallback 在微信开发者工具通过人工验证。状态：`DONE`。
 
 ## Sprint M1.4：工程验收
 
@@ -742,14 +764,7 @@ P0 闭环后邀请 10—30 名真实用户参加一次兴趣活动测试，观�
 
 # 20. 当前下一步
 
-现在只执行 M0。
+M1.1、M1.2、M1.3 已完成。M1.4 为 `NOT_STARTED`，只有在产品负责人和技术负责人明确批准
+后才能进入其 Scope/Preflight。
 
-M0 完成前：
-
-- 不初始化正式业务；
-- 不开发模板；
-- 不接 AI；
-- 不做 NFC；
-- 不写社交状态机代码。
-
-M0 通过后，再由 Tech Lead 生成 M1 的最终执行提示词。
+在此之前不得开始 M1.4 或 M2，不开发模板/名牌领域，不接 AI/NFC，不修改 CloudBase。
