@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：`DONE`
+> 版本：M1.4 final v1.0｜日期：2026-07-29｜状态：M1 Foundation `COMPLETE`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -222,6 +222,46 @@ M1.3 人工验收：
   validation 的现有 wire response compatibility，`PASS`。
 - M1.3-B：微信开发者工具七状态、retry 可见性、非法安全 fallback、一次点击一个 intent、
   匿名启动和 M1.2 工具保留，`PASS`。
+
+### 7.6 M1.4 Foundation Acceptance / M2 Entry Readiness
+
+M1.4 自动验收：
+
+- `npm.cmd run shared:check`；
+- `npm.cmd run format:check`；
+- `npm.cmd run lint`；
+- `npm.cmd run typecheck`；
+- `npm.cmd test`：23 个测试文件、161 项测试；
+- `npm.cmd run cloudfunctions:check`；
+- `npm.cmd run cloudfunctions:check:isolated`；
+- `git diff --check`。
+
+CloudBase development 只读验收：
+
+- 三个身份函数存在，入口为 `index.main`；
+- 现有 Runtime 保持 ADR-032 接受的 development `Nodejs16.13` 偏差；
+- 四个环境变量 Key 均存在，政策版本为 `v1/v1`，未查看或记录 HMAC Secret 值；
+- invoke permissions 保持默认拒绝和关联小程序可信身份边界；
+- `users`、`identity_mappings` 存在且客户端不可读写；
+- 没有 HTTP/公网入口，observed drift=`NONE`，no mutation performed。
+
+微信开发者工具聚焦回归：
+
+- 项目编译通过；
+- cold start 保持 `ANONYMOUS`；
+- 启动不自动调用 `authEnsureUser`、`accountGetMe`、`accountAcceptPolicies`；
+- 七种 canonical PageState 正常；
+- 只有 network-error/unavailable 显示 Retry，单击只产生一个 intent；
+- invalid input 使用无 Retry、不反射输入的安全 fallback；
+- M1.2 development-only 工具页面和 UI 保持可访问。
+
+M1.4 明确未执行 Secret Rotation、数据库 reset、首次 ensure ×20、
+RESTRICTED/DELETED 真实夹具、双设备账号 smoke 或 staging 创建/验证。这些项目按既有
+deferred 或 external testing gate 处理，不是 M1.4 blocker。
+
+治理边界：M2 Entry Gate `CLOSED` 只允许 M2.1 进入独立 Preflight + Planning；M2.1
+保持 `NOT_STARTED`。Implementation 必须在 Planning 完成、Plan 通过 Review 并获得明确
+implementation approval 后才能开始。
 
 ## 8. 页面状态测试
 

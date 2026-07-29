@@ -2,7 +2,10 @@
 
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
-当前状态：M1.1、M1.2、M1.3 均为 `DONE`；M1.4 为 `NOT_STARTED`。
+当前状态：M1 Foundation `COMPLETE`；M1.1、M1.2、M1.3、M1.4 均为 `DONE`。
+M2 Entry Gate `CLOSED` 只允许 M2.1 进入独立 Preflight + Planning；M2.1 仍为
+`NOT_STARTED`。Implementation 必须在 Planning 完成、Plan 通过 Review 并获得明确批准后
+才能开始。
 
 M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
 CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
@@ -16,6 +19,12 @@ M1.3 已建立客户端远端响应运行时安全边界和最小 PageState 基�
 retry 事件。当前自动测试基线为 23 个测试文件、161 项测试。M1.3 没有新增 CloudBase
 部署、集合或服务端函数；名牌、模板、收藏、认识请求、相遇、联系方式、AI 和 NFC
 仍未实现。
+
+M1.4 作为 M2 Entry Readiness / Foundation Acceptance Sprint 完成了当前 `main` HEAD
+回归、development CloudBase 只读漂移检查、微信开发者工具聚焦回归、M1 Foundation
+Acceptance 和 M2 Entry Gate 关闭。本 Sprint 没有产品代码修改或 CloudBase mutation。
+staging 不是未来 M2.1 implementation approval 的前置条件，但必须在 external testing
+前建立并通过独立安全门禁。
 
 ## 环境要求
 

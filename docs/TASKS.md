@@ -1,10 +1,10 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：M1-03 `DONE`
+> 版本：M1.4 final v1.0｜日期：2026-07-29｜状态：M1-04 `DONE`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01、M1-02、M1-03 为 `DONE`；M1-04 及以后未开始。
+> 当前规则：M0 已人工通过；M1-01、M1-02、M1-03、M1-04 均为 `DONE`；M2-01 及以后未开始。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -98,20 +98,36 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 - 风险：shared 镜像漂移由 `shared:check` 阻止；NaN 独立 case 为 Final Review
   LOW/non-blocking。状态：`DONE`。
 
-### M1-04 M1 验收与 staging 接入
+### M1-04 M1 Foundation Acceptance / M2 Entry Readiness
 
 - 元数据：M1｜M1.4｜P0｜依赖 M1-03。
-- 范围：CI/等价检查、staging 说明、M1 记录；不做 M2。
-- 目录：测试/文档/配置；无新集合/函数/页面。
-- 验收：格式/类型/测试全绿、四环境隔离、无密钥、文档一致。
-- 测试：全量命令；开发者工具和 staging 冒烟；iPhone/Android 登录。
-- 风险：未说明 mock/平台缺口。状态：`NOT_STARTED`。
+- 定位：M2 Entry Readiness / Foundation Acceptance Sprint。
+- 范围：当前 HEAD 回归、development CloudBase 只读漂移检查、微信开发者工具聚焦回归、
+  M1 Foundation Acceptance、M2 Entry Gate 关闭和 Closeout 文档；不做产品代码或 M2。
+- 目录：仅 README、任务/计划/决策/测试文档和 `reviews/M1_4_FINAL_CLOSEOUT.md`；
+  无产品代码、配置、集合、函数、页面或 CloudBase mutation。
+- 验收：M1.1/M1.2/M1.3 均为 `DONE`；main clean 且 HEAD 与 origin/main 一致；完整门禁
+  通过；development 函数、环境变量 Key、调用权限、集合和客户端权限无漂移；匿名启动、
+  七状态、retry、非法 fallback 和 M1.2 工具聚焦回归通过；M2.1 可进入独立
+  Preflight + Planning，但仍为 `NOT_STARTED`。
+- M2.1 权限：Implementation 必须在 M2.1 Planning 完成、Plan 通过 Review 并获得明确
+  implementation approval 后才能开始；M1.4 不授予实现权限。
+- 测试：`shared:check`、格式、Lint、类型、23 个文件/161 项测试、两个 cloudfunctions
+  门禁和 `git diff --check` 均通过；CloudBase 只读核验和微信开发者工具人工验证通过。
+- staging：不是未来 M2.1 implementation approval 的前置条件；external testing 前必须
+  完成独立环境、App/配置、数据、HMAC Secret、目标 Runtime、SDK advisory 和
+  invoke/database security 门禁。
+- 延后：M1.2 deferred validations、M1.3 deferred capabilities、双设备 smoke、staging、
+  CI/CD/monitoring 按对应后续 gate 处理，均不阻塞 M1.4。
+- 风险：development Node16/SDK accepted risks 不得继承到 staging。状态：`DONE`。
 
 ## 4. M2 模板、编辑器与发布
 
 ### M2-01 模板注册与渲染
 
 - 元数据：M2｜M2.1｜P0｜依赖 M1-04。
+- 治理：当前只允许独立 Preflight + Planning。Implementation 必须在 Planning 完成、
+  Plan 通过 Review 并获得明确 implementation approval 后才能开始。
 - 范围：Schema、六模板、共享渲染、安全回退、版本/兼容；不做 L3/商城/AI。
 - 目录：`templates/components/domain`；集合无；函数 templateList/templateGet；页面 P03—P05、P09 基础。
 - 验收：4 社交+2 简历；类型拒绝；切换不删内容；旧版本可渲染。

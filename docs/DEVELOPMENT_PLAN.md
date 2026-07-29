@@ -1,7 +1,7 @@
 # 「碰一下名牌」MVP Development Plan
 
-> **文档版本：M1.3 final v1.0**
-> **日期：2026-07-28**
+> **文档版本：M1.4 final v1.0**
+> **日期：2026-07-29**
 > **状态：面向 Codex 的正式开发执行计划**  
 > **唯一产品事实来源：`docs/PRD.md`**  
 > **适用阶段：M0—M5**
@@ -547,11 +547,27 @@ cloud-function middleware abstraction。按 YAGNI 原则推迟到首次真实消
 字段；远端错误不透传；匿名启动不自动建号；七种 PageState、retry 可见性和非法状态
 fallback 在微信开发者工具通过人工验证。状态：`DONE`。
 
-## Sprint M1.4：工程验收
+## Sprint M1.4：M2 Entry Readiness / Foundation Acceptance
 
-范围：运行脚本、CI 或等价检查、文档、staging 接入说明、M1 验收记录。
+范围：当前 HEAD 回归验证、development CloudBase 只读漂移检查、微信开发者工具聚焦
+回归、M1 Foundation Acceptance、M2 Entry Gate 关闭和 Closeout 文档。
 
-停止条件：未通过格式、类型和测试时不得进入 M2。
+实际完成：
+
+- current HEAD regression validation；
+- development CloudBase read-only drift check；
+- WeChat DevTools focused regression；
+- M1 Foundation Acceptance；
+- M2 Entry Gate closure。
+
+本 Sprint `NO PRODUCT CODE CHANGE`，没有 CloudBase mutation，也没有创建 staging。
+M2 Entry Gate `CLOSED` 只允许 M2.1 进入独立 Preflight + Planning，不构成
+Implementation 批准。staging `NOT REQUIRED BEFORE M2.1 CODING`，但
+`MUST BEFORE EXTERNAL TESTING`；届时必须使用独立 CloudBase、App/获批微信配置、数据和
+HMAC Secret，并重新验证目标 Runtime、SDK advisory、函数调用权限和数据库安全。
+
+停止条件：任一自动门禁、只读环境核验或聚焦人工回归失败时不得关闭 M2 Entry Gate。
+最终结果：`DONE`。
 
 ---
 
@@ -764,7 +780,11 @@ P0 闭环后邀请 10—30 名真实用户参加一次兴趣活动测试，观�
 
 # 20. 当前下一步
 
-M1.1、M1.2、M1.3 已完成。M1.4 为 `NOT_STARTED`，只有在产品负责人和技术负责人明确批准
-后才能进入其 Scope/Preflight。
+M1.1、M1.2、M1.3、M1.4 已完成，M1 Foundation Acceptance 为 `PASS`，M2 Entry Gate
+已关闭。M2.1 Template domain foundation 仍为 `NOT_STARTED`，当前只允许进入独立
+Preflight + Planning。
 
-在此之前不得开始 M1.4 或 M2，不开发模板/名牌领域，不接 AI/NFC，不修改 CloudBase。
+M2.1 Planning 边界是 Template schema、registry、renderer 和 preview foundation；不得
+规划修改 M1 identity foundation、创建 `cards`、实现草稿或发布。Implementation 必须在
+Planning 完成、Plan 通过 Review 并获得明确批准后才能开始。staging 不是该
+implementation approval 的前置条件，但必须在 external testing 前建立并完成独立安全门禁。

@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：M1-02 `DONE`
+> 版本：M1.4 final v1.0｜日期：2026-07-29｜状态：M1-04 `DONE`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -497,6 +497,8 @@
 - 状态：`ACCEPTED`
 - 日期：2026-07-28
 - 决策人：产品负责人、技术负责人
+- 部分取代范围：ADR-034 已取代本 ADR 中“staging integration 仍属于 M1.4”的排期决定；
+  本 ADR 其他决定保持不变。
 - 背景：原路线图把统一结果、校验、调用、日志、配置、analytics、页面状态、登录引导、
   skeleton、retry 和 operation state 都列入 M1.3。当前没有消费者能验证其中多数抽象；
   一次建设“完整通用基础设施平台”会扩大回归面，并可能提前固化错误的领域接口。
@@ -518,7 +520,7 @@
   - cloud-function middleware abstraction：推迟到出现多个真实领域函数并能证明共同
     middleware 边界后；
   - Template/Card/Greeting/Encounter/Contact schema：由各领域首次消费者 Sprint 建立；
-  - staging integration：仍属于 M1.4。
+  - staging integration：原排期为 M1.4；该排期已由 ADR-034 取代。
 - 替代：在 M1.3 一次完成 analytics、retry engine、timeout、operation state、middleware、
   skeleton 和登录引导；该方案因无真实消费者、回归面过大而拒绝。
 - 后果：M1.3 消除了 M2.1 的共享安全边界 blocker；M2.1 仍必须等待 M1.4 等既有依赖完成
@@ -526,3 +528,37 @@
   是有意排期，不是 M1.3 blocker 或未偿还的实现承诺。
 - 验证：M1.3-A、M1.3-B 均完成 Implementation、Independent Review、Fix/Re-Review、
   自动门禁和人工验收；最终基线为 23 个测试文件、161 项测试。
+
+## ADR-034 M1.4 采用 Foundation Acceptance / M2 Entry Readiness
+
+- 状态：`ACCEPTED`
+- 日期：2026-07-29
+- 决策人：产品负责人、技术负责人
+- 背景：M1.1 工程基础、M1.2 development 身份基础和 M1.3 客户端运行时安全/PageState
+  已分别 Closeout。进入 M2.1 前需要确认当前 main HEAD、真实 development 配置和微信
+  开发者工具行为没有漂移，而不是继续建设没有真实消费者的新基础设施。
+- 决策：
+  - M1.4 是 M2 Entry Readiness / Foundation Acceptance Sprint，只做回归、只读核验、
+    聚焦人工验证、文档状态和 Entry Gate 关闭。
+  - M1.4 不修改产品代码、shared、miniprogram、cloudfunctions、数据库、CloudBase、
+    权限、Secret、Runtime、依赖或锁文件。
+  - staging `NOT REQUIRED BEFORE M2.1 CODING`。
+  - staging `MUST BEFORE EXTERNAL TESTING`，届时必须建立并通过独立安全门禁。
+  - staging 必须使用独立 CloudBase、独立 App/获批微信配置、独立数据、独立 HMAC Secret
+    和目标 Node Runtime，并重新执行 SDK advisory、invoke permission 和 database
+    security validation。
+  - ADR-031 的 SDK accepted risk 和 ADR-032 的 development Nodejs16.13 deviation
+    均不得继承到 staging 或 production。
+  - M2 Entry Gate `CLOSED` 只允许 M2.1 进入独立 Preflight + Planning；M2.1 仍为
+    `NOT_STARTED`。
+  - M2.1 Planning 只可覆盖既有身份边界外的 Template schema、registry、renderer 和
+    preview foundation；不得规划修改 M1 identity foundation，除非发现 blocker 并获得
+    独立批准。
+  - M2.1 Implementation 必须在 Planning 完成、Plan 通过 Review 并获得明确 implementation
+    approval 后才能开始。
+- 后果：M1 Foundation Acceptance 为 `PASS`，M2 Entry Gate 关闭，M1-04 更新为
+  `DONE`；M2.1 仍为 `NOT_STARTED`，不会因本决策自动进入 Implementation。
+- 验证：当前 main/远端 HEAD 一致；完整自动门禁通过，基线保持 23 个测试文件、161 项
+  测试；development CloudBase 只读核验无漂移、无 mutation；微信开发者工具编译、
+  匿名 cold start、零自动身份调用、七状态、retry、非法 fallback 和 M1.2 工具保留均
+  人工 `PASS`。
