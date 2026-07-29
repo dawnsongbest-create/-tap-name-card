@@ -1,6 +1,6 @@
 # 「碰一下名牌」云函数 API 规格
 
-> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：`DONE`
+> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
 > 本文定义逻辑契约，不声明任何未验证的微信/CloudBase API 名称。  
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[UI](./UI_SPEC.md)｜[测试](./TEST_PLAN.md)
 
@@ -91,6 +91,13 @@ parser 的输出。
 | `accountDelete` P0（M4） | `input:{confirm:true,meta}` → `Ack` | 登录、本人、二次确认 | W users/cards/contacts/blocks；先 DELETED 和公开/私密入口失效，后续清理可恢复；恢复/幂等字段在 M4 决定 | 严格；`INVALID_INPUT/DUPLICATE_ACTION/SERVICE_UNAVAILABLE`；故障注入与重放；未知结果调用 accountGetMe/公共 Token 验证 |
 | `templateList` P0 | `input:{cardType?:CardType}` → `{templates:TemplateSummary[]}` | 匿名可读；只返回启用的仓库配置 | R 版本化模板注册；无数据库写 | 可缓存；`INVALID_INPUT/SERVICE_UNAVAILABLE`；六模板与类型过滤；失败用安全内置配置/重试 |
 | `templateGet` P0 | `input:{templateId:string,version?:number}` → `{template:CardTemplate}` | 匿名可读；ID/版本白名单 | R 模板注册；配置错误安全回退并记录 | 可缓存；`RESOURCE_NOT_FOUND/SERVICE_UNAVAILABLE`；版本兼容；失败返回列表 |
+
+M2.1-A 实现状态说明：上表保留历史逻辑 API 设计，但 `templateList` 和 `templateGet`
+Cloud Functions 当前均为 `DEFERRED`，不是 M2.1-A 的部署项。当前模板事实来源是
+app-bundled local versioned production registry，客户端同步执行 list/filter/get/resolve。
+只有出现 dynamic templates、无需 app release 的模板运营、remote disable/update 或其他
+真实产品需求时，才重新评估 Cloud catalog；在此之前不得并行维护 local + Cloud 两套当前
+catalog 事实来源。
 
 ### 2.1 M1.2-B 平台调用边界
 

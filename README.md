@@ -3,9 +3,15 @@
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
 当前状态：M1 Foundation `COMPLETE`；M1.1、M1.2、M1.3、M1.4 均为 `DONE`。
-M2 Entry Gate `CLOSED` 只允许 M2.1 进入独立 Preflight + Planning；M2.1 仍为
-`NOT_STARTED`。Implementation 必须在 Planning 完成、Plan 通过 Review 并获得明确批准后
-才能开始。
+M2.1 为 `IN_PROGRESS`：M2.1-A Template Domain / Schema / Registry 已完成并通过
+Independent Re-Review，状态为 `DONE`；M2.1-B、M2.1-C 均为 `NOT_STARTED`，其中
+M2.1-B Implementation 尚未获批。
+
+M2.1-A 在 `miniprogram/templates/` 内建立本地模板领域：`TemplateDefinition v1`、
+`TemplateRegistryEntry`、`RenderModel v1`、六个稳定模板定义、运行时领域校验，以及
+generic registry / production catalog 分离的本地同步 registry。模板契约没有进入根
+`shared/` 或生成镜像，也没有引入 Card、Draft、Snapshot、Persistence、Cloud DTO、
+Renderer、Preview fixture 或 asset binding。CloudBase Impact 为 `NONE`。
 
 M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
 CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
@@ -16,9 +22,9 @@ CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适�
 M1.3 已建立客户端远端响应运行时安全边界和最小 PageState 基础：运行时响应校验、
 三个身份 endpoint 的 success DTO parser、canonical `ErrorCode` 运行时边界、安全
 `CloudFunctionResult` normalization、七种 canonical PageState，以及只表达用户意图的
-retry 事件。当前自动测试基线为 23 个测试文件、161 项测试。M1.3 没有新增 CloudBase
-部署、集合或服务端函数；名牌、模板、收藏、认识请求、相遇、联系方式、AI 和 NFC
-仍未实现。
+retry 事件。M1.3 closeout 基线为 23 个测试文件、161 项测试。M1.3 没有新增 CloudBase
+部署、集合或服务端函数；在 M1.3 closeout 时，名牌、模板、收藏、认识请求、相遇、
+联系方式、AI 和 NFC 尚未实现。
 
 M1.4 作为 M2 Entry Readiness / Foundation Acceptance Sprint 完成了当前 `main` HEAD
 回归、development CloudBase 只读漂移检查、微信开发者工具聚焦回归、M1 Foundation
@@ -94,8 +100,8 @@ npm.cmd run cloudfunctions:check
 npm.cmd run cloudfunctions:check:isolated
 ```
 
-这些命令必须真实执行。命令存在不代表检查通过。M1.3 closeout 基线为 23 个测试文件、
-161 项测试。
+这些命令必须真实执行。命令存在不代表检查通过。当前 M2.1-A closeout 基线为
+27 个测试文件、217 项测试。
 `cloudfunctions:check:isolated` 会在系统临时目录按各函数锁文件安装生产依赖、检查完整
 依赖树并加载入口；它不连接或部署 CloudBase。
 
@@ -117,13 +123,13 @@ npm.cmd run shared:sync
 
 ## 目录说明
 
-- `miniprogram/`：微信原生小程序代码和工程初始化页。
+- `miniprogram/`：微信原生小程序代码、工程初始化页和本地模板领域/registry。
 - `miniprogram/shared/`：供微信编译器使用的生成镜像，不是第二份源代码。
 - `cloudfunctions/`：身份领域层、微信可信身份、CloudBase 事务适配和三个可独立构建的云函数入口。
 - `shared/`：公共定义和工具的唯一源。
 - `tools/`：共享契约同步、云函数构建与部署边界检查脚本。
-- `tests/`：M1.1 工程测试、M1.2 身份测试，以及 M1.3 runtime boundary、DTO parser、
-  PageState 和 development-only 验收工具测试。
+- `tests/`：M1 工程/身份/运行时边界测试，以及 M2.1-A 模板定义、领域校验、registry、
+  RenderModel 和架构边界测试。
 - `docs/`：产品、架构、测试和任务基线。
 
 ## 换一台 Windows 电脑继续

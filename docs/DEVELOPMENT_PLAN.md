@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP Development Plan
 
-> **文档版本：M1.4 final v1.0**
+> **文档版本：M2.1-A final closeout v1.0**
 > **日期：2026-07-29**
 > **状态：面向 Codex 的正式开发执行计划**  
 > **唯一产品事实来源：`docs/PRD.md`**  
@@ -575,9 +575,29 @@ HMAC Secret，并重新验证目标 Runtime、SDK advisory、函数调用权限�
 
 ## Sprint M2.1：模板注册和渲染框架
 
-范围：模板 Schema、6 个 MVP 模板注册、通用渲染接口、社交和简历渲染分层、安全默认模板、模板版本、模板预览页。
+总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B、M2.1-C `NOT_STARTED`。
 
-验收：模板数量一致，类型不匹配时拒绝，配置错误回退安全模板，模板切换不删除内容，不支持模块进入“暂未展示”。
+M2.1-A 已完成 Template Domain / Schema / Registry：
+
+- 契约仅位于 `miniprogram/templates/`，没有修改根 `shared/` 或生成镜像；
+- `TemplateDefinition v1`、`TemplateRegistryEntry`、`RenderModel v1` 和六模板所需最小
+  module contract；
+- 4 个 SOCIAL + 2 个 RESUME 稳定模板定义；
+- runtime domain validation、精确 v1 版本语义和 category-safe fallback；
+- generic `createTemplateRegistry` 与 current-product
+  `createProductionTemplateRegistry` 分离；
+- app-bundled local synchronous registry 是当前模板事实来源；
+- 27 个测试文件、217 项测试和完整自动门禁通过；
+- Independent Re-Review：`PASS / NO BLOCKING FINDINGS`；
+- CloudBase Impact：`NONE`，`templateList`/`templateGet` Cloud Functions 延后。
+
+M2.1-A 没有 Card/Draft/Snapshot/Persistence/Cloud DTO、Renderer、Preview fixture、
+asset binding 或产品 UI。Human UI validation 对本批次不适用；manual domain boundary
+inspection 为 `PASS`。
+
+M2.1-B 将覆盖 CardRenderer、六个视觉 renderer、WXML/WXSS、fixtures、本地 preview
+assets 和视觉验收；M2.1-C 将覆盖 Anonymous Gallery、Template Preview、routing 和
+browse/select/back/switch UX。二者均未开始，M2.1-B Implementation 尚未获批。
 
 ## Sprint M2.2：名牌 CRUD 与草稿
 
@@ -780,11 +800,11 @@ P0 闭环后邀请 10—30 名真实用户参加一次兴趣活动测试，观�
 
 # 20. 当前下一步
 
-M1.1、M1.2、M1.3、M1.4 已完成，M1 Foundation Acceptance 为 `PASS`，M2 Entry Gate
-已关闭。M2.1 Template domain foundation 仍为 `NOT_STARTED`，当前只允许进入独立
-Preflight + Planning。
+M1.1、M1.2、M1.3、M1.4 已完成，M1 Foundation Acceptance 为 `PASS`。M2.1 当前为
+`IN_PROGRESS`：M2.1-A Template Domain / Schema / Registry 已完成并通过 Independent
+Re-Review；M2.1-B、M2.1-C 均为 `NOT_STARTED`。
 
-M2.1 Planning 边界是 Template schema、registry、renderer 和 preview foundation；不得
-规划修改 M1 identity foundation、创建 `cards`、实现草稿或发布。Implementation 必须在
-Planning 完成、Plan 通过 Review 并获得明确批准后才能开始。staging 不是该
-implementation approval 的前置条件，但必须在 external testing 前建立并完成独立安全门禁。
+下一步仅是 M2.1-A Final Closeout Review；随后才可 Commit、Push 并确认 working tree
+clean、`main == origin/main`。完成这些治理步骤后，才能独立进入 M2.1-B Preflight /
+Batch Gate。M2.1-B Implementation 仍需明确批准；不得由 M2.1-A closeout 自动进入。
+staging 必须在 external testing 前建立并完成独立安全门禁。

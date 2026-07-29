@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M1.3 final v1.0｜日期：2026-07-28｜状态：`DONE`
+> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
 >
 > 约束：M1.2 身份主链路和 M1.3 客户端响应安全/PageState 基础已通过验收；
 > M1.2 deferred validations 与 M1.3 deferred capabilities 不阻塞各自 closeout。
@@ -123,17 +123,30 @@ unknown remote response
 
 共享类型是编译期契约，运行时校验是安全边界，两者缺一不可。
 
-根 `shared/` 仍是唯一 shared source。`miniprogram/shared/` 与
+根 `shared/` 仍是跨运行时共享契约的唯一 shared source。`miniprogram/shared/` 与
 `cloudfunctions/shared/contracts/` 是同步工具生成的运行时镜像，不得手工维护。
+M2.1-A 的模板契约是单一小程序运行时消费者的 `LOCAL_DOMAIN`，只位于
+`miniprogram/templates/`，不是根 shared contract；只有出现真实第二 runtime consumer
+时才重新评估抽取。
 
 ## 6. 模板与渲染
 
-- 六个 MVP 模板以仓库内版本化配置注册：四社交、两简历。
-- `cardType` 与模板类型必须一致；配置失败回退 `T-SOCIAL-01` 或对应安全简历模板。
-- 编辑器、完整预览、公开页和 Canvas 导出共享“内容规范化 + 模板布局描述”，各渲染端只负责适配。
-- 模板切换保留全部内容；不支持模块记为 `visible=false` 的兼容展示状态，不删除数据。
-- 老快照携带 `templateId + templateVersion`，旧渲染器需兼容；主动升级才迁移。
-- 动画不承载必要信息，尊重减少动态效果；版权素材和字体需有授权记录。
+- M2.1-A 模板领域只存在于 `miniprogram/templates/`，提供 `TemplateDefinition v1`、
+  `TemplateRegistryEntry`、`RenderModel v1`、六模板所需最小 module contract 和运行时校验。
+- `TemplateDefinition != TemplateRegistryEntry != Preview implementation metadata`；
+  `RenderModel != Persistence Model`。本批次没有 Card、Draft、Snapshot、Persistence、
+  Cloud DTO、Renderer、Preview fixture 或 asset binding。
+- 六个 MVP 模板以 app-bundled local versioned registry 注册：四 SOCIAL、两 RESUME。
+  generic registry 只负责 parsing、重复拒绝、fallback 合法性及确定性
+  list/filter/get/resolve；production catalog 另行保证恰好六模板、批准的 ID/顺序、
+  4+2 类别分布和 fallback。
+- 当前只支持精确 v1 Schema/Template/RenderModel；未知 ID、不支持版本或类别不匹配时，
+  registry 按请求类别回退到 `T-SOCIAL-01` 或 `T-RESUME-01`。
+- 当前模板事实来源只有 local production registry；Cloud `templateList`/`templateGet`
+  延后，避免 local + Cloud 双事实来源。出现动态模板、无需发版的运营、远程禁用/更新或
+  其他真实产品需求时再评估 Cloud catalog。
+- 编辑器、完整预览、公开页、Canvas 导出、模板切换持久化和旧快照兼容属于后续批次；
+  M2.1-A 不宣称这些能力或视觉验收完成。
 
 ## 7. 身份、访问与权限
 
@@ -244,7 +257,7 @@ AppID 和 EnvId 是环境标识，允许提交；AppSecret、HMAC/AI Key 仅在�
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 当前仓库树（M1.3 final）
+## 16. 当前仓库树（M2.1-A closeout）
 
 ```text
 tap-name-card/
@@ -267,7 +280,8 @@ tap-name-card/
 │  ├─ components/page-state/
 │  ├─ shared/（由根 shared/ 生成的运行时镜像）
 │  ├─ config/ services/ state/
-│  ├─ domain/ templates/ utils/ constants/ assets/
+│  ├─ templates/（M2.1-A local template domain / definitions / registry）
+│  ├─ domain/ utils/ constants/ assets/
 ├─ cloudfunctions/
 │  ├─ authEnsureUser/ accountGetMe/ accountAcceptPolicies/
 │  └─ shared/
@@ -305,6 +319,8 @@ M1.2-B 在 M1.2-A 身份领域层上增加平台适配并完成真实 developmen
   `miniprogram/shared/` 与 `cloudfunctions/shared/contracts/` 是生成镜像；
   `shared:sync` 负责同步，静态质量命令通过 `shared:check` 阻止漂移。
 - foundation 页面只提供手动身份探针；应用启动不调用三个身份函数，保证匿名浏览边界。
+- M2.1-A 只新增 `miniprogram/templates/` local domain 和对应单元/边界测试；根
+  `shared/`、两个生成镜像、页面、组件、Cloud Functions 与 CloudBase 均未变更。
 - `wx-server-sdk@4.0.2` 只负责微信云函数初始化和按每次调用执行
   `getWXContext()`，投影可信 `OPENID/APPID`；不从 `event` 或普通函数 `context` 推断身份，
   不缓存进程级动态身份。

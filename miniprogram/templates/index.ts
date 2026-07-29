@@ -1,2 +1,11 @@
-// 正式模板注册属于 M2，本文件仅用于固定目录边界。
-export {};
+export {
+  FALLBACK_TEMPLATE_ID_BY_CATEGORY,
+  createProductionTemplateRegistry,
+  createTemplateRegistry,
+  templateRegistry,
+  type TemplateRegistry,
+  type TemplateResolution,
+  type TemplateResolutionReason,
+} from './registry';
+export type { TemplateRegistryEntry } from './registry-entry';
+export * from './domain';

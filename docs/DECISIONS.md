@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M1.4 final v1.0｜日期：2026-07-29｜状态：M1-04 `DONE`
+> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -91,8 +91,15 @@
 - 背景：MVP 只有六模板，不需要后台/用户代码。
 - 决策/原因：版本化配置、具体 Schema、安全回退；禁止用户 CSS/JS/字体。
 - 替代：模板管理后台/远程代码。
-- 后果：审查、测试和回滚简单；模板更新随版本发布。
-- 风险/复审：模板数量/运营频率显著增加后复审。
+- M2.1-A 实际影响：采用 `miniprogram/templates/` 内的 app-bundled local versioned
+  registry；generic registry 与当前六模板 production catalog 约束分离。模板契约保持
+  `LOCAL_DOMAIN`，未抽取到根 `shared/`，CloudBase Impact 为 `NONE`。
+- 后果：审查、测试和回滚简单；模板更新随 app 版本发布。历史 `templateList` /
+  `templateGet` Cloud API 设计保留，但 Cloud implementation 当前 `DEFERRED`，local
+  production registry 是唯一当前模板事实来源。
+- 风险/复审：出现 dynamic templates、无需 app release 的模板运营、remote
+  disable/update、真实第二 runtime consumer 或其他产品需求时复审 Cloud catalog /
+  shared extraction；在此之前不得维护 local + Cloud 双事实来源。
 
 ## ADR-011 视觉图片客户端 Canvas 2D 优先
 
@@ -557,7 +564,9 @@
   - M2.1 Implementation 必须在 Planning 完成、Plan 通过 Review 并获得明确 implementation
     approval 后才能开始。
 - 后果：M1 Foundation Acceptance 为 `PASS`，M2 Entry Gate 关闭，M1-04 更新为
-  `DONE`；M2.1 仍为 `NOT_STARTED`，不会因本决策自动进入 Implementation。
+  `DONE`；M1.4 closeout 当时 M2.1 仍为 `NOT_STARTED`，不会因本决策自动进入
+  Implementation。此后 M2.1-A 已经独立 Planning、批准、实现和 Re-Review，当前状态为
+  M2.1 `IN_PROGRESS`、M2.1-A `DONE`、M2.1-B/C `NOT_STARTED`。
 - 验证：当前 main/远端 HEAD 一致；完整自动门禁通过，基线保持 23 个测试文件、161 项
   测试；development CloudBase 只读核验无漂移、无 mutation；微信开发者工具编译、
   匿名 cold start、零自动身份调用、七状态、retry、非法 fallback 和 M1.2 工具保留均

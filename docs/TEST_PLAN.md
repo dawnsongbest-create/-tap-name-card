@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M1.4 final v1.0｜日期：2026-07-29｜状态：M1 Foundation `COMPLETE`
+> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -259,9 +259,41 @@ M1.4 明确未执行 Secret Rotation、数据库 reset、首次 ensure ×20、
 RESTRICTED/DELETED 真实夹具、双设备账号 smoke 或 staging 创建/验证。这些项目按既有
 deferred 或 external testing gate 处理，不是 M1.4 blocker。
 
-治理边界：M2 Entry Gate `CLOSED` 只允许 M2.1 进入独立 Preflight + Planning；M2.1
-保持 `NOT_STARTED`。Implementation 必须在 Planning 完成、Plan 通过 Review 并获得明确
-implementation approval 后才能开始。
+M1.4 closeout 当时的治理边界是只允许 M2.1 进入独立 Preflight + Planning。此后
+M2.1-A 已按独立批准完成；当前状态见下一节，M2.1-B/C 未由 M1.4 或 M2.1-A 自动获批。
+
+### 7.7 M2.1-A Template Domain / Schema / Registry
+
+M2.1-A 自动覆盖：
+
+- 六个稳定模板定义、4 SOCIAL + 2 RESUME、批准的 ID/顺序和 module capabilities；
+- `TemplateDefinition v1` 与 runtime whitelist parsing、类别/版本/字段和 PRD domain
+  constraints；
+- `RenderModel v1`、六模板最小 module contract、visible/order 选择和 persistence /
+  implementation metadata 丢弃；
+- generic registry 的 parsing、duplicate rejection、fallback validity 和确定性
+  list/filter/get/resolve；
+- production catalog 的 exactly-six、稳定 ID/顺序、4+2 类别分布和批准 fallback；
+- 未知模板、不支持版本和 category mismatch 的 category-safe fallback；
+- local template domain 不进入 pages/services/state/components/persistence/repository，
+  不进入根 `shared/` 或两个生成镜像的 architecture boundary guardrail。
+
+最终自动基线：27 个测试文件、217 项测试；`shared:check`、`format:check`、Lint、
+typecheck、Vitest、两个 Cloud Functions 门禁和 `git diff --check` 全部通过。
+
+Independent Review 首轮为 `CHANGES_REQUIRED`；两个 MEDIUM 和 generic registry LOW
+经 Fix Round 1 关闭，architecture boundary guardrail LOW 作为 non-blocking 接受。
+Independent Re-Review 为 `PASS / NO BLOCKING FINDINGS`。manual domain boundary
+inspection 为 `PASS`。
+
+Human UI validation 对 M2.1-A 为 `N/A`，因为没有 Gallery、Preview、CardRenderer、
+WXML/WXSS 或视觉 renderer。CloudBase validation 为 `N/A`，因为 CloudBase Impact 为
+`NONE`。
+
+已接受两项 non-blocking debt：architecture guardrail 可能未覆盖某些直接 relative import
+逃逸路径；PHOTO_GALLERY runtime 正确拒绝 zero images，但测试矩阵没有显式 zero-photo
+negative case。二者不在 closeout 修改代码/测试，须在 M2.1 overall closeout 前或
+M2.1-B/C renderer/fallback tests 扩充时补齐或重新评估。
 
 ## 8. 页面状态测试
 

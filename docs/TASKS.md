@@ -1,10 +1,11 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M1.4 final v1.0｜日期：2026-07-29｜状态：M1-04 `DONE`
+> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
-> 当前规则：M0 已人工通过；M1-01、M1-02、M1-03、M1-04 均为 `DONE`；M2-01 及以后未开始。
+> 当前规则：M0 已人工通过；M1-01、M1-02、M1-03、M1-04 均为 `DONE`；M2.1-A
+> `DONE`，M2.1-B/M2.1-C `NOT_STARTED`，M2.1 整体 `IN_PROGRESS`。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -126,13 +127,25 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 ### M2-01 模板注册与渲染
 
 - 元数据：M2｜M2.1｜P0｜依赖 M1-04。
-- 治理：当前只允许独立 Preflight + Planning。Implementation 必须在 Planning 完成、
-  Plan 通过 Review 并获得明确 implementation approval 后才能开始。
-- 范围：Schema、六模板、共享渲染、安全回退、版本/兼容；不做 L3/商城/AI。
-- 目录：`templates/components/domain`；集合无；函数 templateList/templateGet；页面 P03—P05、P09 基础。
-- 验收：4 社交+2 简历；类型拒绝；切换不删内容；旧版本可渲染。
-- 测试：Schema/视觉夹具；六模板手工；iPhone/Android 渲染。
-- 风险：版权、字体、跨端布局。状态：`NOT_STARTED`。
+- 总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B、M2.1-C `NOT_STARTED`。
+- M2.1-A 已完成：`miniprogram/templates/` 本地 `TemplateDefinition v1`、
+  `TemplateRegistryEntry`、`RenderModel v1`、最小六模板 module contract、运行时领域校验、
+  六个稳定模板定义、本地同步 registry、generic registry / production catalog 分离、
+  精确 v1 版本语义和按类别安全回退。根 `shared/` 契约、生成镜像和 CloudBase 均未变更。
+- M2.1-A 验收：4 SOCIAL + 2 RESUME；稳定 ID/顺序；定义、module capability、版本和
+  category 校验；generic registry 与当前六模板产品 catalog 约束分离；27 个测试文件、
+  217 项测试；Independent Re-Review `PASS / NO BLOCKING FINDINGS`。
+- M2.1-B（`NOT_STARTED`）：CardRenderer、六个视觉 renderer、WXML/WXSS、fixtures、
+  本地 preview assets 和 Product/Design visual acceptance。Implementation 尚未获批。
+- M2.1-C（`NOT_STARTED`）：Anonymous Gallery、Template Preview、routing 和
+  browse/select/back/switch UX。
+- Cloud/API：当前模板事实来源是 app-bundled local versioned production registry；
+  `templateList`/`templateGet` Cloud Functions `DEFERRED`，不得同时维护本地和云端两套
+  当前 catalog 事实来源。
+- 不做：Card persistence、Draft、Snapshot、Editor、Upload、Publish、Share、Collection、
+  Greeting、Encounter、Contact exchange、Analytics、AI、NFC、Dynamic template platform。
+- 下一门禁：M2.1-A Final Closeout Review、Commit/Push/clean sync 完成后，独立进入
+  M2.1-B Preflight / Batch Gate；本记录不授予 M2.1-B Implementation 权限。
 
 ### M2-02 名牌 CRUD 与草稿
 
