@@ -20,6 +20,50 @@
   </view>
 
   <view class="foundation__section">
+    <view class="foundation__section-title">M2.1-B1 Development-only Renderer Lab</view>
+    <view class="foundation__renderer-lab">
+      <view class="foundation__request-id">
+        Renderer foundation only. Six formal visual implementations remain deferred to B2/B3.
+      </view>
+      <view class="foundation__renderer-lab-label">Template</view>
+      <view class="foundation__renderer-lab-controls">
+        <button
+          wx:for="{{rendererLabTemplateIds}}"
+          wx:key="*this"
+          size="mini"
+          class="foundation__renderer-lab-button {{item === rendererLabTemplateId ? 'foundation__renderer-lab-button--active' : ''}}"
+          data-template-id="{{item}}"
+          bindtap="onSelectRendererLabTemplate"
+        >
+          {{item}}
+        </button>
+      </view>
+      <view class="foundation__renderer-lab-label">Fixture scenario</view>
+      <view class="foundation__renderer-lab-controls">
+        <button
+          wx:for="{{rendererLabScenarios}}"
+          wx:key="*this"
+          size="mini"
+          class="foundation__renderer-lab-button {{item === rendererLabScenario ? 'foundation__renderer-lab-button--active' : ''}}"
+          data-scenario="{{item}}"
+          bindtap="onSelectRendererLabScenario"
+        >
+          {{item}}
+        </button>
+      </view>
+      <view class="foundation__renderer-lab-current">
+        {{rendererLabTemplateId}} · {{rendererLabScenario}}
+      </view>
+      <view class="foundation__renderer-lab-stage">
+        <card-renderer
+          id="renderer-lab-card-renderer"
+          model="{{rendererLabModel}}"
+        ></card-renderer>
+      </view>
+    </view>
+  </view>
+
+  <view class="foundation__section">
     <view class="foundation__section-title">M1.3-B 基础页面状态</view>
     <view class="foundation__state-list">
       <page-state kind="ready"></page-state>

@@ -1,0 +1,36 @@
+<view class="card-renderer">
+  <apple-minimal-renderer
+    id="renderer-apple-minimal"
+    wx:if="{{status === 'ready' && rendererKey === 'apple-minimal'}}"
+    model="{{viewModel}}"
+  ></apple-minimal-renderer>
+  <magazine-renderer
+    id="renderer-magazine"
+    wx:elif="{{status === 'ready' && rendererKey === 'magazine'}}"
+    model="{{viewModel}}"
+  ></magazine-renderer>
+  <scrapbook-renderer
+    id="renderer-scrapbook"
+    wx:elif="{{status === 'ready' && rendererKey === 'scrapbook'}}"
+    model="{{viewModel}}"
+  ></scrapbook-renderer>
+  <anime-role-renderer
+    id="renderer-anime-role"
+    wx:elif="{{status === 'ready' && rendererKey === 'anime-role'}}"
+    model="{{viewModel}}"
+  ></anime-role-renderer>
+  <professional-renderer
+    id="renderer-professional"
+    wx:elif="{{status === 'ready' && rendererKey === 'professional'}}"
+    model="{{viewModel}}"
+  ></professional-renderer>
+  <project-portfolio-renderer
+    id="renderer-project-portfolio"
+    wx:elif="{{status === 'ready' && rendererKey === 'project-portfolio'}}"
+    model="{{viewModel}}"
+  ></project-portfolio-renderer>
+  <view wx:else class="card-renderer__fallback">
+    <view class="card-renderer__fallback-title">名牌暂时无法显示</view>
+    <view class="card-renderer__fallback-message">请检查内容后再试一次。</view>
+  </view>
+</view>

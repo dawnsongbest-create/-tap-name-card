@@ -79,13 +79,12 @@ describe('M2.1-A template architecture boundary', () => {
     }
   });
 
-  it('does not add renderer, fixture, asset or preview implementation files in M2.1-A', () => {
+  it('keeps renderer, asset and preview implementation out of the M2.1-A contract area', () => {
     const implementationPattern = /(?:renderer|fixture|preview|asset)/iu;
+    const m21aContractFiles = listTypeScriptFiles(TEMPLATE_ROOT)
+      .map((path) => relative(TEMPLATE_ROOT, path))
+      .filter((path) => !path.startsWith(`fixtures${sep}`));
 
-    expect(
-      listTypeScriptFiles(TEMPLATE_ROOT)
-        .map((path) => relative(TEMPLATE_ROOT, path))
-        .filter((path) => implementationPattern.test(path)),
-    ).toEqual([]);
+    expect(m21aContractFiles.filter((path) => implementationPattern.test(path))).toEqual([]);
   });
 });

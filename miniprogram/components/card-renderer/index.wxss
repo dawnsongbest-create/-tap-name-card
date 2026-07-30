@@ -1,0 +1,28 @@
+.card-renderer {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.card-renderer__fallback {
+  box-sizing: border-box;
+  min-height: 320rpx;
+  padding: 48rpx 36rpx;
+  border: 1rpx solid #d2d2d7;
+  border-radius: 24rpx;
+  background: #ffffff;
+  color: #1d1d1f;
+  text-align: center;
+}
+
+.card-renderer__fallback-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.card-renderer__fallback-message {
+  margin-top: 12rpx;
+  color: #6e6e73;
+  font-size: 24rpx;
+  line-height: 1.6;
+}

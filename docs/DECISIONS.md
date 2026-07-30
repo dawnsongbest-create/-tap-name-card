@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
+> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -571,3 +571,48 @@
   测试；development CloudBase 只读核验无漂移、无 mutation；微信开发者工具编译、
   匿名 cold start、零自动身份调用、七状态、retry、非法 fallback 和 M1.2 工具保留均
   人工 `PASS`。
+
+## ADR-035 M2.1-B1 采用单一 CardRenderer trust boundary
+
+- 状态：`ACCEPTED`
+- 日期：2026-07-30
+- 决策人：产品负责人、技术负责人
+- 背景：M2.1-A 已建立本地 `RenderModel v1`、template definitions 和 registry。B1 只需
+  建设可验证的 Renderer Foundation，不得提前完成六套正式视觉，也不得改变 A 的 domain
+  validity、身份、持久化或 CloudBase 边界。
+- 决策：
+  - 唯一正式 raw ingress 是公共 `CardRenderer`：
+    `raw unknown → parseCardRendererInput → parseRenderModel → typed RenderModel`。
+    `prepareCardRender` 只接受 typed model，fixtures 和 child renderers 不重复 parse。
+  - domain invalid、exact resolution failure、capability incompatibility 使用独立 failure
+    taxonomy。只有 `parseRenderModel` 决定 `DOMAIN_INVALID`；renderer resolution 和
+    capability enforcement 不重定义 M2.1-A validity。
+  - renderer runtime 不 best-effort guessing。unknown template、category/version mismatch
+    或 missing binding 均安全失败，不 fallback 到 Apple、同 category、旧版本或 generic
+    visual renderer。
+  - `PreparedCardViewModel` 只包含 safe `identity` 与 filtered/ordered `modules`。用于
+    capability validation 的 intermediate state 不导出；renderer-specific layout、装饰、
+    CSS-like metadata 和 image ratio 只在 renderer/component presentation 层计算。
+  - template 到 `RendererKey` 使用精确 TypeScript binding 和静态 WXML branches；ready
+    只 mount 一个 child，failure 清空 renderer key/view model，避免 stale UI。
+  - 六个 child renderer 在 B1 仅为 dispatch shells，不是正式视觉。official fixture 为
+    6×4=24，全部 parser PASS + capability PASS；negative fixtures 只用于 failure 测试。
+  - Foundation Renderer Lab 是 development-only local harness，不形成 product route/state，
+    不调用 identity、network、persistence、storage 或 CloudBase。
+  - image ratio `1:1/3:4/4:3` 是 presentation primitive，不进入 common Prepared VM。
+  - B1 package targets 只作观察和 review threshold；真实要求是 DevTools package report、
+    无 oversized/duplicate asset、安全压缩和符合平台/项目发布约束。
+- 失败设计：
+  - `DOMAIN_INVALID / INVALID_RENDER_MODEL`；
+  - `RESOLUTION_FAILURE / UNKNOWN_TEMPLATE | CATEGORY_MISMATCH |
+UNSUPPORTED_VERSION | MISSING_RENDERER_BINDING`；
+  - `CAPABILITY_INCOMPATIBLE / MISSING_REQUIRED_MODULE |
+UNSUPPORTED_VISIBLE_MODULE | DUPLICATE_VISIBLE_MODULE |
+EMPTY_REQUIRED_MODULE`。
+- 后果：B1 可独立关闭为 `DONE`，M2.1-B 保持 `IN_PROGRESS`。B2/B3 与 M2.1-C 保持
+  `NOT_STARTED`，必须获得各自明确 implementation approval。删除 Renderer Lab 不影响
+  renderer architecture。
+- 验证：31 个测试文件、244 项测试与全部自动门禁通过；Independent Architecture Review、
+  WeChat DevTools Manual Gate 和 Post-DevTools Re-Review 均为 `PASS`；native included
+  package 139,796 bytes、binary media 0。CloudBase/identity impact 为 `NONE`，CloudBase
+  manual validation 为 `N/A`。

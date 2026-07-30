@@ -5,7 +5,7 @@ import {
   type TemplateCategory,
   type TemplateDefinition,
   type TemplateId,
-} from './domain';
+} from './domain/index';
 import {
   ANIME_ROLE_TEMPLATE,
   APPLE_MINIMAL_TEMPLATE,
@@ -13,7 +13,7 @@ import {
   PROFESSIONAL_TEMPLATE,
   PROJECT_PORTFOLIO_TEMPLATE,
   SCRAPBOOK_TEMPLATE,
-} from './definitions';
+} from './definitions/index';
 import type { TemplateRegistryEntry } from './registry-entry';
 
 export const FALLBACK_TEMPLATE_ID_BY_CATEGORY: Readonly<Record<TemplateCategory, TemplateId>> = {

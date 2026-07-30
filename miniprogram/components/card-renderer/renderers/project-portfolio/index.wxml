@@ -1,0 +1,5 @@
+<view class="renderer-shell">
+  <view class="renderer-shell__eyebrow">B1 RENDERER SHELL</view>
+  <view class="renderer-shell__name">{{model.identity.displayName || 'Project Portfolio'}}</view>
+  <view class="renderer-shell__message">Static dispatch ready · Formal visual deferred to B3</view>
+</view>

@@ -1,11 +1,12 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
+> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
 >
 > 当前规则：M0 已人工通过；M1-01、M1-02、M1-03、M1-04 均为 `DONE`；M2.1-A
-> `DONE`，M2.1-B/M2.1-C `NOT_STARTED`，M2.1 整体 `IN_PROGRESS`。
+> `DONE`，M2.1-B `IN_PROGRESS`（B1 `DONE`、B2/B3 `NOT_STARTED`），M2.1-C
+> `NOT_STARTED`，M2.1 整体 `IN_PROGRESS`。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -127,7 +128,8 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 ### M2-01 模板注册与渲染
 
 - 元数据：M2｜M2.1｜P0｜依赖 M1-04。
-- 总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B、M2.1-C `NOT_STARTED`。
+- 总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B `IN_PROGRESS`（B1 `DONE`、B2/B3
+  `NOT_STARTED`）；M2.1-C `NOT_STARTED`。
 - M2.1-A 已完成：`miniprogram/templates/` 本地 `TemplateDefinition v1`、
   `TemplateRegistryEntry`、`RenderModel v1`、最小六模板 module contract、运行时领域校验、
   六个稳定模板定义、本地同步 registry、generic registry / production catalog 分离、
@@ -135,8 +137,22 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 - M2.1-A 验收：4 SOCIAL + 2 RESUME；稳定 ID/顺序；定义、module capability、版本和
   category 校验；generic registry 与当前六模板产品 catalog 约束分离；27 个测试文件、
   217 项测试；Independent Re-Review `PASS / NO BLOCKING FINDINGS`。
-- M2.1-B（`NOT_STARTED`）：CardRenderer、六个视觉 renderer、WXML/WXSS、fixtures、
-  本地 preview assets 和 Product/Design visual acceptance。Implementation 尚未获批。
+- M2.1-B1 Renderer Foundation（`DONE`）：单一公共 `CardRenderer`；唯一
+  `raw unknown → parseCardRendererInput → parseRenderModel` ingress；typed
+  `prepareCardRender(RenderModel)`；domain/capability separation；精确 template resolution；
+  静态 renderer binding；renderer-neutral `PreparedCardViewModel`；ready/failure projection；
+  六个最小 child renderer shells；24 个 official fixtures；development-only Foundation
+  Renderer Lab；architecture invariant tests；真实 WeChat DevTools runtime smoke；native
+  package measurement。
+- B1 自动门禁：31 个测试文件、244 项测试；`shared:check`、format、lint、typecheck、
+  Vitest、两个 Cloud Functions 检查和 `git diff --check` 全部通过。Independent
+  Architecture Review、DevTools Manual Gate 和 Post-DevTools Re-Review 均为 `PASS`。
+- B1 CloudBase/identity impact：`NONE`。没有 Cloud Function、集合、存储、权限、环境、
+  deployment 或身份行为变更；CloudBase manual validation 为 `N/A`。
+- M2.1-B2（`NOT_STARTED`）：Apple Minimal、Magazine、Scrapbook、Anime Role 四套
+  Social 正式视觉；未获 implementation approval。
+- M2.1-B3（`NOT_STARTED`）：Professional、Project Portfolio 两套 Resume 正式视觉；
+  未获 implementation approval。
 - M2.1-C（`NOT_STARTED`）：Anonymous Gallery、Template Preview、routing 和
   browse/select/back/switch UX。
 - Cloud/API：当前模板事实来源是 app-bundled local versioned production registry；
@@ -144,8 +160,8 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
   当前 catalog 事实来源。
 - 不做：Card persistence、Draft、Snapshot、Editor、Upload、Publish、Share、Collection、
   Greeting、Encounter、Contact exchange、Analytics、AI、NFC、Dynamic template platform。
-- 下一门禁：M2.1-A Final Closeout Review、Commit/Push/clean sync 完成后，独立进入
-  M2.1-B Preflight / Batch Gate；本记录不授予 M2.1-B Implementation 权限。
+- 下一门禁：M2.1-B1 Final Closeout Review。通过后仍须获得独立、明确的 B2
+  implementation approval；本记录不授权 B2、B3 或 M2.1-C。
 
 ### M2-02 名牌 CRUD 与草稿
 

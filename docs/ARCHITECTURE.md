@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
+> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
 >
 > 约束：M1.2 身份主链路和 M1.3 客户端响应安全/PageState 基础已通过验收；
 > M1.2 deferred validations 与 M1.3 deferred capabilities 不阻塞各自 closeout。
@@ -134,19 +134,64 @@ M2.1-A 的模板契约是单一小程序运行时消费者的 `LOCAL_DOMAIN`，�
 - M2.1-A 模板领域只存在于 `miniprogram/templates/`，提供 `TemplateDefinition v1`、
   `TemplateRegistryEntry`、`RenderModel v1`、六模板所需最小 module contract 和运行时校验。
 - `TemplateDefinition != TemplateRegistryEntry != Preview implementation metadata`；
-  `RenderModel != Persistence Model`。本批次没有 Card、Draft、Snapshot、Persistence、
-  Cloud DTO、Renderer、Preview fixture 或 asset binding。
+  `RenderModel != Persistence Model`。
 - 六个 MVP 模板以 app-bundled local versioned registry 注册：四 SOCIAL、两 RESUME。
   generic registry 只负责 parsing、重复拒绝、fallback 合法性及确定性
   list/filter/get/resolve；production catalog 另行保证恰好六模板、批准的 ID/顺序、
   4+2 类别分布和 fallback。
 - 当前只支持精确 v1 Schema/Template/RenderModel；未知 ID、不支持版本或类别不匹配时，
-  registry 按请求类别回退到 `T-SOCIAL-01` 或 `T-RESUME-01`。
+  M2.1-A registry 的显式 catalog resolution API 可按请求类别返回配置的安全 fallback；
+  B1 renderer runtime 不使用该 fallback API，必须精确解析。
 - 当前模板事实来源只有 local production registry；Cloud `templateList`/`templateGet`
   延后，避免 local + Cloud 双事实来源。出现动态模板、无需发版的运营、远程禁用/更新或
   其他真实产品需求时再评估 Cloud catalog。
-- 编辑器、完整预览、公开页、Canvas 导出、模板切换持久化和旧快照兼容属于后续批次；
-  M2.1-A 不宣称这些能力或视觉验收完成。
+
+M2.1-B1 Renderer Foundation 的唯一 trust chain：
+
+```text
+raw unknown
+→ parseCardRendererInput
+→ parseRenderModel
+→ typed RenderModel
+→ prepareCardRender
+→ exact template/category/version resolution
+→ capability enforcement
+→ PreparedCardViewModel
+→ exact RendererKey
+→ static WXML branch
+→ exactly one child renderer
+```
+
+- `CardRenderer` 是唯一公共 runtime renderer ingress。`prepareCardRender` 只接受 typed
+  `RenderModel`，fixture presentation path 和 child renderers 不解析 raw unknown。
+- 只有 `parseRenderModel` 决定 M2.1-A domain validity。capability enforcement 不扩大或
+  重定义 domain validity；用于 capability validation 的 normalized candidate 只存在于
+  preparation 内部，不进入公共 contract。
+- renderer resolution 要求 template、category、schema/template/render version 和 binding
+  精确匹配。`UNKNOWN_TEMPLATE`、`CATEGORY_MISMATCH`、`UNSUPPORTED_VERSION` 或
+  `MISSING_RENDERER_BINDING` 均进入 safe failure，不猜测或 fallback。
+- `PreparedCardViewModel` 只包含 `identity: RenderIdentity` 与
+  `modules: readonly RenderModule[]`，是 validated/normalized/safe、renderer-neutral 的
+  presentation projection，不是第二套 domain model。layout、decorative coordinates、
+  CSS-like metadata、image ratio 和 renderer-specific prepared state 不进入公共 contract。
+- 组件将 preparation 结果投影为 `ready | failure`；failure 必须清空
+  `rendererKey=''`、`viewModel=null`，确保 `setData` merge 后没有 stale child。
+- `RendererKey` 到六个 child component 的绑定是受控静态 WXML branch；B1 child renderer
+  仅为最小 shell，用于验证 dispatch，不是 Apple/Magazine/Scrapbook/Anime/
+  Professional/Portfolio 正式视觉。
+- official fixture 固定为六模板 × `NORMAL | LONG_TEXT | MISSING_IMAGE |
+MINIMAL_OPTIONAL_CONTENT`，共 24 个。每个 fixture 必须先 `parseRenderModel` PASS，再
+  capability PASS；negative capability fixtures 只用于测试，不进入 Prepared VM 或 child。
+  `MISSING_IMAGE` 仅表示合法 optional image absent，不执行 URL probing 或其他 I/O。
+- image ratio `1:1 | 3:4 | 4:3` 是 renderer/component presentation primitive，不属于
+  common Prepared VM。
+- Renderer Lab 只嵌入 Foundation development harness，纯本地、确定性、零 route/product
+  state/persistence/identity/network/CloudBase side effect；删除 Lab 不影响 renderer 架构。
+- 微信运行时对部分 directory-style runtime imports 解析不稳定，B1 使用 explicit
+  file/index imports；这是平台兼容修正，没有建立第二 parser、测试/运行时分叉或新 shared
+  contract。
+- 编辑器、完整产品预览、公开页、Canvas 导出、模板选择持久化和正式六模板视觉属于后续
+  批次；B1 不宣称这些能力或视觉验收完成。
 
 ## 7. 身份、访问与权限
 
@@ -257,7 +302,7 @@ AppID 和 EnvId 是环境标识，允许提交；AppSecret、HMAC/AI Key 仅在�
 
 服务端配置键至少包括：内容审核开关、小程序码开关、AI/P1、NFC/P2、订阅消息/P1、每用户名牌上限、认识频率、请求有效期、联系方式冷却、上传限制。
 
-## 16. 当前仓库树（M2.1-A closeout）
+## 16. 当前仓库树（M2.1-B1 closeout）
 
 ```text
 tap-name-card/
@@ -277,10 +322,13 @@ tap-name-card/
 │  ├─ app.ts / app.json / app.wxss
 │  ├─ sitemap.json
 │  ├─ pages/foundation/
-│  ├─ components/page-state/
+│  │  └─ renderer-lab.ts（development-only local harness）
+│  ├─ components/
+│  │  ├─ page-state/
+│  │  └─ card-renderer/（public shell、preparation、bindings、六个 child shells）
 │  ├─ shared/（由根 shared/ 生成的运行时镜像）
 │  ├─ config/ services/ state/
-│  ├─ templates/（M2.1-A local template domain / definitions / registry）
+│  ├─ templates/（local domain / definitions / registry / deterministic fixtures）
 │  ├─ domain/ utils/ constants/ assets/
 ├─ cloudfunctions/
 │  ├─ authEnsureUser/ accountGetMe/ accountAcceptPolicies/
@@ -319,8 +367,9 @@ M1.2-B 在 M1.2-A 身份领域层上增加平台适配并完成真实 developmen
   `miniprogram/shared/` 与 `cloudfunctions/shared/contracts/` 是生成镜像；
   `shared:sync` 负责同步，静态质量命令通过 `shared:check` 阻止漂移。
 - foundation 页面只提供手动身份探针；应用启动不调用三个身份函数，保证匿名浏览边界。
-- M2.1-A 只新增 `miniprogram/templates/` local domain 和对应单元/边界测试；根
-  `shared/`、两个生成镜像、页面、组件、Cloud Functions 与 CloudBase 均未变更。
+- M2.1-A 建立 `miniprogram/templates/` local domain；M2.1-B1 在其上增加本地
+  CardRenderer Foundation、fixtures 和 Foundation Renderer Lab。根 `shared/`、两个生成
+  镜像、Cloud Functions 与 CloudBase 均未变更。
 - `wx-server-sdk@4.0.2` 只负责微信云函数初始化和按每次调用执行
   `getWXContext()`，投影可信 `OPENID/APPID`；不从 `event` 或普通函数 `context` 推断身份，
   不缓存进程级动态身份。

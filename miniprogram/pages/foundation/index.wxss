@@ -103,3 +103,49 @@
   gap: 16rpx;
   margin-top: 24rpx;
 }
+
+.foundation__renderer-lab {
+  box-sizing: border-box;
+  padding: 28rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+}
+
+.foundation__renderer-lab-label {
+  margin-top: 24rpx;
+  color: #424245;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.foundation__renderer-lab-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.foundation__renderer-lab-button {
+  margin: 0;
+  border: 1rpx solid #d2d2d7;
+  background: #ffffff;
+  color: #424245;
+  font-size: 20rpx;
+}
+
+.foundation__renderer-lab-button--active {
+  border-color: #1d1d1f;
+  background: #1d1d1f;
+  color: #ffffff;
+}
+
+.foundation__renderer-lab-current {
+  margin-top: 24rpx;
+  color: #6e6e73;
+  font-size: 22rpx;
+  overflow-wrap: anywhere;
+}
+
+.foundation__renderer-lab-stage {
+  margin-top: 20rpx;
+}

@@ -1,6 +1,6 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
+> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
@@ -290,10 +290,59 @@ Human UI validation 对 M2.1-A 为 `N/A`，因为没有 Gallery、Preview、Card
 WXML/WXSS 或视觉 renderer。CloudBase validation 为 `N/A`，因为 CloudBase Impact 为
 `NONE`。
 
-已接受两项 non-blocking debt：architecture guardrail 可能未覆盖某些直接 relative import
-逃逸路径；PHOTO_GALLERY runtime 正确拒绝 zero images，但测试矩阵没有显式 zero-photo
-negative case。二者不在 closeout 修改代码/测试，须在 M2.1 overall closeout 前或
-M2.1-B/C renderer/fallback tests 扩充时补齐或重新评估。
+已接受的 architecture guardrail non-blocking debt 是可能未覆盖某些直接 relative import
+逃逸路径。原 zero-photo parser debt 已在 B1 关闭：required `PHOTO_GALLERY` 的
+`items=[]` 由 M2.1-A parser 拒绝，并有自动 negative test。zero-photo/no-image 的正式
+视觉质量属于 B2/B3，不是 B1 foundation gate。
+
+### 7.8 M2.1-B1 Renderer Foundation
+
+B1 新增 architecture invariant tests，明确覆盖：
+
+- domain validity 只由 `parseRenderModel` 决定，capability failure 不改写为
+  `DOMAIN_INVALID`；
+- raw unknown 只有 `CardRenderer`/`parseCardRendererInput` 一个正式 ingress，
+  `prepareCardRender(RenderModel)`、official fixture presentation path 和 child renderer
+  不重复 parse；
+- domain invalid、resolution failure 与 capability incompatibility 均不产生
+  `PreparedCardViewModel`，也不 mount child；
+- unknown template、category/version mismatch、missing binding 不 fallback 到 Apple、
+  同 category、旧版本或 generic renderer；
+- Prepared VM 只有 renderer-neutral `identity` 与 filtered/ordered `modules`，不保存
+  capability 临时状态、layout/decorative/CSS-like/image-ratio/renderer-specific metadata；
+- `RendererKey` TypeScript bindings 与 WXML static branches 一致，ready 只 dispatch
+  一个 child；
+- failure projection 清空 `rendererKey` 和 `viewModel`，覆盖 ready→failure→ready 与
+  `setData` merge stale-state cleanup；
+- 24 个 official fixtures 全部 parser PASS + capability PASS；negative capability fixtures
+  不进入 Prepared VM；`MISSING_IMAGE` 是合法 optional image absent；
+- Foundation Renderer Lab 只做本地 deterministic switching，零 route、product state、
+  persistence、storage mutation、identity refresh、network 或 CloudBase side effect；
+- required empty `PHOTO_GALLERY` 在 parser boundary 拒绝，关闭 B1 foundation 范围内的
+  zero-photo negative debt。
+
+最终自动基线为 31 个测试文件、244 项测试。`shared:check`、`format:check`、lint、
+typecheck、Vitest、`cloudfunctions:check`、`cloudfunctions:check:isolated` 和
+`git diff --check` 全部实际通过。
+
+Independent Architecture Review：`PASS / NO BLOCKING FINDINGS`。初次 non-blocking
+concerns（exact binding chain hardening、stale cleanup）已经修复并通过 focused re-review。
+DevTools runtime import compatibility fix 后，对七个 post-review-sensitive files 进行直接
+复审，结论为 `PASS / NO BLOCKING FINDINGS / B1_FINAL_CODE_REVIEWED`。
+
+真实 WeChat DevTools Stable `v2.01.2510290`、基础库 `3.17.0` 的 manual gate 结果：
+compile、`CardRenderer` mount、六 shell dispatch、24/24 fixture matrix、
+ready→failure→ready、stale renderer cleanup、Renderer Lab local switching 和
+zero-side-effect 均为 `PASS`。唯一意外 warning 为 `getSystemInfoSync` deprecated，未影响
+B1；没有执行 Preview 或 Upload。
+
+native package report：included 98 files、139,796 bytes（约 136.52 KiB，DevTools 显示
+137 KB）；full miniprogram raw 140,333 bytes（约 137.04 KiB）；binary media 0。package
+数字是 observation/review threshold，不是缺少平台依据的机械 blocker。
+
+CloudBase validation：`N/A because impact NONE`。B1 没有 Cloud Function、集合、存储、
+权限、环境或 deployment 变更，Lab 的 identity/network/database/storage mutation 均为 0。
+B1 manual gate 不代表 B2/B3 正式视觉验证。
 
 ## 8. 页面状态测试
 

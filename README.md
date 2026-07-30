@@ -4,14 +4,17 @@
 
 当前状态：M1 Foundation `COMPLETE`；M1.1、M1.2、M1.3、M1.4 均为 `DONE`。
 M2.1 为 `IN_PROGRESS`：M2.1-A Template Domain / Schema / Registry 已完成并通过
-Independent Re-Review，状态为 `DONE`；M2.1-B、M2.1-C 均为 `NOT_STARTED`，其中
-M2.1-B Implementation 尚未获批。
+Independent Re-Review，状态为 `DONE`；M2.1-B 为 `IN_PROGRESS`，其中 Renderer
+Foundation（B1）为 `DONE`；B2、B3 和 M2.1-C 均为 `NOT_STARTED`。B1 完成不授予
+B2 Implementation 权限。
 
 M2.1-A 在 `miniprogram/templates/` 内建立本地模板领域：`TemplateDefinition v1`、
 `TemplateRegistryEntry`、`RenderModel v1`、六个稳定模板定义、运行时领域校验，以及
 generic registry / production catalog 分离的本地同步 registry。模板契约没有进入根
-`shared/` 或生成镜像，也没有引入 Card、Draft、Snapshot、Persistence、Cloud DTO、
-Renderer、Preview fixture 或 asset binding。CloudBase Impact 为 `NONE`。
+`shared/` 或生成镜像。M2.1-B1 在该领域上建立单一公共 `CardRenderer`、唯一 raw parsing
+ingress、typed preparation/capability boundary、精确静态 renderer binding、renderer-neutral
+`PreparedCardViewModel`、24 个确定性 fixtures、development-only Renderer Lab，以及六个
+最小 child renderer shells。六个 shell 不是正式视觉实现。B1 CloudBase Impact 为 `NONE`。
 
 M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
 CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
@@ -82,7 +85,12 @@ development 三个现有函数实际运行 `Nodejs16.13`，这是 ADR-032 限定
 4. 确认开发者工具已关联 development 环境。
 5. 编译后应看到工程身份基础页。
 6. 页面应展示 development 已配置提示、七种基础 PageState、安全非法状态 fallback、
-   两种可重试状态和手动身份探针。
+   两种可重试状态、手动身份探针和 development-only Renderer Lab。
+
+M2.1-B1 已在 WeChat DevTools Stable `v2.01.2510290`、基础库 `3.17.0` 完成真实本地
+compile、`CardRenderer` mount、六 shell dispatch、24 fixture/scenario matrix、
+ready/failure 双向切换、stale-state cleanup 和 Lab 本地切换验证。该验证不包含 Preview、
+Upload、正式六模板视觉或产品路由。
 
 `project.config.json`、原生 TypeScript、页面注册与两套根目录识别已在 M1.1/M1.2-A
 微信开发者工具人工验收中通过。若开发者工具后续调整或移除字段，应重新验证并记录到
@@ -100,8 +108,8 @@ npm.cmd run cloudfunctions:check
 npm.cmd run cloudfunctions:check:isolated
 ```
 
-这些命令必须真实执行。命令存在不代表检查通过。当前 M2.1-A closeout 基线为
-27 个测试文件、217 项测试。
+这些命令必须真实执行。命令存在不代表检查通过。当前 M2.1-B1 closeout 基线为
+31 个测试文件、244 项测试。
 `cloudfunctions:check:isolated` 会在系统临时目录按各函数锁文件安装生产依赖、检查完整
 依赖树并加载入口；它不连接或部署 CloudBase。
 
@@ -123,13 +131,14 @@ npm.cmd run shared:sync
 
 ## 目录说明
 
-- `miniprogram/`：微信原生小程序代码、工程初始化页和本地模板领域/registry。
+- `miniprogram/`：微信原生小程序代码、工程初始化页、本地模板领域/registry，以及
+  M2.1-B1 CardRenderer Foundation。
 - `miniprogram/shared/`：供微信编译器使用的生成镜像，不是第二份源代码。
 - `cloudfunctions/`：身份领域层、微信可信身份、CloudBase 事务适配和三个可独立构建的云函数入口。
 - `shared/`：公共定义和工具的唯一源。
 - `tools/`：共享契约同步、云函数构建与部署边界检查脚本。
-- `tests/`：M1 工程/身份/运行时边界测试，以及 M2.1-A 模板定义、领域校验、registry、
-  RenderModel 和架构边界测试。
+- `tests/`：M1 工程/身份/运行时边界测试，以及 M2.1-A/B1 模板领域、renderer preparation、
+  capability、binding、fixture/Lab 和架构 invariant 测试。
 - `docs/`：产品、架构、测试和任务基线。
 
 ## 换一台 Windows 电脑继续

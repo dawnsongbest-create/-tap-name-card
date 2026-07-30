@@ -1,0 +1,11 @@
+{
+  "component": true,
+  "usingComponents": {
+    "apple-minimal-renderer": "./renderers/apple-minimal/index",
+    "magazine-renderer": "./renderers/magazine/index",
+    "scrapbook-renderer": "./renderers/scrapbook/index",
+    "anime-role-renderer": "./renderers/anime-role/index",
+    "professional-renderer": "./renderers/professional/index",
+    "project-portfolio-renderer": "./renderers/project-portfolio/index"
+  }
+}

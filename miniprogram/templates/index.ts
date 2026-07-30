@@ -8,4 +8,4 @@ export {
   type TemplateResolutionReason,
 } from './registry';
 export type { TemplateRegistryEntry } from './registry-entry';
-export * from './domain';
+export * from './domain/index';

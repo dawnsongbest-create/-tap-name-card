@@ -234,6 +234,19 @@ describe('M2.1-A render model validation', () => {
         visible: true,
         order: 0,
         content: {
+          layout: 'SINGLE',
+          items: [],
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      parseRenderModule({
+        moduleId: 'photos',
+        moduleType: 'PHOTO_GALLERY',
+        visible: true,
+        order: 0,
+        content: {
           layout: 'TWO',
           items: [{ imageRef: 'only-one' }],
         },

@@ -1,7 +1,7 @@
 # 「碰一下名牌」MVP Development Plan
 
-> **文档版本：M2.1-A final closeout v1.0**
-> **日期：2026-07-29**
+> **文档版本：M2.1-B1 final closeout v1.0**
+> **日期：2026-07-30**
 > **状态：面向 Codex 的正式开发执行计划**  
 > **唯一产品事实来源：`docs/PRD.md`**  
 > **适用阶段：M0—M5**
@@ -411,14 +411,14 @@ success DTO；远端未知字段和远端 `message/details/stack` 不进入客�
 
 # 9. 里程碑总览
 
-| 里程碑 | 目标 | 主要产物 |
-|---|---|---|
-| M0 | 规划和技术决策 | 8 份规划文档、任务树、风险清单 |
-| M1 | 可运行工程和身份基础 | 小程序骨架、云开发、统一基础设施 |
-| M2 | 用户可以创建并发布名牌 | 模板、编辑器、草稿、审核、版本 |
-| M3 | 别人可以浏览、分享和收藏 | 匿名公开页、小程序码、图片导出 |
-| M4 | 完成双向社交闭环 | 请求、回赠、相遇、联系方式、安全 |
-| M5 | P1 AI 和上线质量 | AI 助手、真机测试、安全与审核材料 |
+| 里程碑 | 目标                     | 主要产物                          |
+| ------ | ------------------------ | --------------------------------- |
+| M0     | 规划和技术决策           | 8 份规划文档、任务树、风险清单    |
+| M1     | 可运行工程和身份基础     | 小程序骨架、云开发、统一基础设施  |
+| M2     | 用户可以创建并发布名牌   | 模板、编辑器、草稿、审核、版本    |
+| M3     | 别人可以浏览、分享和收藏 | 匿名公开页、小程序码、图片导出    |
+| M4     | 完成双向社交闭环         | 请求、回赠、相遇、联系方式、安全  |
+| M5     | P1 AI 和上线质量         | AI 助手、真机测试、安全与审核材料 |
 
 ---
 
@@ -575,7 +575,8 @@ HMAC Secret，并重新验证目标 Runtime、SDK advisory、函数调用权限�
 
 ## Sprint M2.1：模板注册和渲染框架
 
-总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B、M2.1-C `NOT_STARTED`。
+总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B `IN_PROGRESS`（B1 `DONE`、B2/B3
+`NOT_STARTED`）；M2.1-C `NOT_STARTED`。
 
 M2.1-A 已完成 Template Domain / Schema / Registry：
 
@@ -591,13 +592,30 @@ M2.1-A 已完成 Template Domain / Schema / Registry：
 - Independent Re-Review：`PASS / NO BLOCKING FINDINGS`；
 - CloudBase Impact：`NONE`，`templateList`/`templateGet` Cloud Functions 延后。
 
-M2.1-A 没有 Card/Draft/Snapshot/Persistence/Cloud DTO、Renderer、Preview fixture、
-asset binding 或产品 UI。Human UI validation 对本批次不适用；manual domain boundary
-inspection 为 `PASS`。
+M2.1-B1 Renderer Foundation 已完成：
 
-M2.1-B 将覆盖 CardRenderer、六个视觉 renderer、WXML/WXSS、fixtures、本地 preview
-assets 和视觉验收；M2.1-C 将覆盖 Anonymous Gallery、Template Preview、routing 和
-browse/select/back/switch UX。二者均未开始，M2.1-B Implementation 尚未获批。
+- 单一公共 `CardRenderer` 和唯一 raw runtime parsing ingress；
+- `parseCardRendererInput → parseRenderModel → typed RenderModel →
+prepareCardRender` trust chain；
+- M2.1-A domain validity 与 renderer capability incompatibility 严格分离；
+- exact template/category/version/binding resolution，不做 Apple、同 category、旧版本或
+  generic visual fallback；
+- renderer-neutral `PreparedCardViewModel`、static controlled WXML binding、ready/failure
+  projection 和 stale renderer state cleanup；
+- 六个最小 child renderer shells；它们只验证 dispatch，不是正式视觉；
+- 6 templates × 4 scenarios = 24 个 official fixtures，全部 parser PASS + capability PASS；
+- Foundation development-only Renderer Lab，纯本地切换且零 route/product state/
+  persistence/identity/network/CloudBase side effect；
+- 31 个测试文件、244 项测试，architecture invariant tests、完整自动门禁、Independent
+  Architecture Review、真实 DevTools Manual Gate 和 Post-DevTools Re-Review 全部通过；
+- native package included size 139,796 bytes（约 136.52 KiB，DevTools 显示 137 KB），
+  full miniprogram raw 140,333 bytes（约 137.04 KiB），binary media 为 0；
+- CloudBase/identity impact 为 `NONE`，CloudBase manual validation 为 `N/A`。
+
+M2.1-B2 将覆盖 Apple Minimal、Magazine、Scrapbook、Anime Role 四套 Social 正式视觉；
+M2.1-B3 将覆盖 Professional、Project Portfolio 两套 Resume 正式视觉。B2/B3 均为
+`NOT_STARTED` 且未获 implementation approval。M2.1-C 将覆盖 Anonymous Gallery、
+Template Preview、routing 和 browse/select/back/switch UX，状态为 `NOT_STARTED`。
 
 ## Sprint M2.2：名牌 CRUD 与草稿
 
@@ -801,10 +819,9 @@ P0 闭环后邀请 10—30 名真实用户参加一次兴趣活动测试，观�
 # 20. 当前下一步
 
 M1.1、M1.2、M1.3、M1.4 已完成，M1 Foundation Acceptance 为 `PASS`。M2.1 当前为
-`IN_PROGRESS`：M2.1-A Template Domain / Schema / Registry 已完成并通过 Independent
-Re-Review；M2.1-B、M2.1-C 均为 `NOT_STARTED`。
+`IN_PROGRESS`：M2.1-A `DONE`；M2.1-B `IN_PROGRESS`，其中 Renderer Foundation B1
+`DONE`、B2/B3 `NOT_STARTED`；M2.1-C `NOT_STARTED`。
 
-下一步仅是 M2.1-A Final Closeout Review；随后才可 Commit、Push 并确认 working tree
-clean、`main == origin/main`。完成这些治理步骤后，才能独立进入 M2.1-B Preflight /
-Batch Gate。M2.1-B Implementation 仍需明确批准；不得由 M2.1-A closeout 自动进入。
-staging 必须在 external testing 前建立并完成独立安全门禁。
+下一步仅是 M2.1-B1 Final Closeout Review。B1 closeout 不表示 M2.1-B 或 M2.1 整体
+完成，也不授予 B2 implementation 权限。B2 必须获得独立、明确批准后才能开始；B3 和
+M2.1-C 同样不得自动进入。staging 必须在 external testing 前建立并完成独立安全门禁。

@@ -14,6 +14,19 @@ import {
   createDevelopmentPolicyProbeView,
   getDevelopmentPolicyAcceptanceInput,
 } from './policy-probe';
+import {
+  INITIAL_RENDERER_LAB_SELECTION,
+  RENDERER_LAB_SCENARIOS,
+  RENDERER_LAB_TEMPLATE_IDS,
+  createRendererLabModel,
+  readRendererLabSelection,
+} from './renderer-lab';
+
+interface RendererLabSelectionEvent {
+  readonly currentTarget: {
+    readonly dataset: Readonly<Record<string, unknown>>;
+  };
+}
 
 const environment = getEnvironmentSummary();
 const environmentConfig = getEnvironmentConfig();
@@ -79,6 +92,41 @@ Page({
     permissionDiagnosticName: 'NOT_RUN',
     permissionDiagnosticDenied: 'false',
     permissionDiagnosticRequestId: '—',
+    rendererLabTemplateIds: RENDERER_LAB_TEMPLATE_IDS,
+    rendererLabScenarios: RENDERER_LAB_SCENARIOS,
+    rendererLabTemplateId: INITIAL_RENDERER_LAB_SELECTION.templateId,
+    rendererLabScenario: INITIAL_RENDERER_LAB_SELECTION.scenario,
+    rendererLabModel: createRendererLabModel(INITIAL_RENDERER_LAB_SELECTION),
+  },
+  onSelectRendererLabTemplate(event: RendererLabSelectionEvent) {
+    const selection = readRendererLabSelection(
+      event.currentTarget.dataset.templateId,
+      this.data.rendererLabScenario,
+    );
+
+    if (!selection) {
+      return;
+    }
+
+    this.setData({
+      rendererLabTemplateId: selection.templateId,
+      rendererLabModel: createRendererLabModel(selection),
+    });
+  },
+  onSelectRendererLabScenario(event: RendererLabSelectionEvent) {
+    const selection = readRendererLabSelection(
+      this.data.rendererLabTemplateId,
+      event.currentTarget.dataset.scenario,
+    );
+
+    if (!selection) {
+      return;
+    }
+
+    this.setData({
+      rendererLabScenario: selection.scenario,
+      rendererLabModel: createRendererLabModel(selection),
+    });
   },
   onRetry() {
     this.setData({
