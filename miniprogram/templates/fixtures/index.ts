@@ -15,8 +15,8 @@ const SOCIAL_IDENTITY = {
   tags: ['城市散步', '独立音乐', '胶片摄影'],
   visual: {
     kind: 'IMAGE',
-    value: '/assets/templates/fixture-social-portrait.png',
-    altText: '原创人物视觉占位',
+    value: '/assets/templates/fixture-social-identity.jpg',
+    altText: '阳光落在浅色石材和金属结构上的建筑光影',
   },
 } as const;
 

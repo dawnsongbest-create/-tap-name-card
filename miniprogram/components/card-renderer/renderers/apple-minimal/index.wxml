@@ -1,5 +1,61 @@
-<view class="renderer-shell">
-  <view class="renderer-shell__eyebrow">B1 RENDERER SHELL</view>
-  <view class="renderer-shell__name">{{model.identity.displayName || 'Apple Minimal'}}</view>
-  <view class="renderer-shell__message">Static dispatch ready · Formal visual deferred to B2</view>
+<view
+  class="apple-minimal {{hasVisual ? 'apple-minimal--with-visual' : 'apple-minimal--no-visual'}} {{hasStatus ? 'apple-minimal--has-status' : 'apple-minimal--minimal'}}"
+>
+  <view class="apple-minimal__focus-mark"></view>
+
+  <view wx:if="{{hasVisual}}" class="apple-minimal__visual-row">
+    <view class="apple-minimal__visual-object">
+      <image
+        wx:if="{{visualKind === 'IMAGE'}}"
+        class="apple-minimal__visual-image renderer-ratio--1-1"
+        src="{{visualValue}}"
+        mode="aspectFill"
+        aria-label="{{visualAltText}}"
+        binderror="onVisualImageError"
+      ></image>
+      <text
+        wx:elif="{{visualKind === 'SYMBOL'}}"
+        class="apple-minimal__visual-symbol"
+        aria-label="{{visualAltText}}"
+      >
+        {{visualValue}}
+      </text>
+      <text
+        wx:elif="{{visualKind === 'EMOJI'}}"
+        class="apple-minimal__visual-emoji"
+        aria-label="{{visualAltText}}"
+      >
+        {{visualValue}}
+      </text>
+      <text
+        wx:elif="{{visualKind === 'TEXT'}}"
+        class="apple-minimal__visual-text"
+        aria-label="{{visualAltText}}"
+      >
+        {{visualValue}}
+      </text>
+      <view
+        wx:elif="{{visualKind === 'DEFAULT_GRAPHIC'}}"
+        class="apple-minimal__default-graphic renderer-ratio--1-1"
+        aria-label="{{visualAltText || '抽象视觉图形'}}"
+      >
+        <view class="apple-minimal__default-orbit"></view>
+        <view class="apple-minimal__default-axis"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="apple-minimal__identity">
+    <view class="apple-minimal__name apple-minimal__name--{{nameScale}}">
+      {{model.identity.displayName}}
+    </view>
+    <view class="apple-minimal__headline">{{model.identity.headline}}</view>
+    <view wx:if="{{tagsText}}" class="apple-minimal__tags">{{tagsText}}</view>
+  </view>
+
+  <view wx:if="{{hasStatus}}" class="apple-minimal__status">
+    <view class="apple-minimal__status-divider"></view>
+    <view class="apple-minimal__status-label">此刻</view>
+    <view class="apple-minimal__status-text">{{statusText}}</view>
+  </view>
 </view>

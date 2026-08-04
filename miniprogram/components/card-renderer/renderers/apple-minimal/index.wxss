@@ -1,29 +1,241 @@
-.renderer-shell {
+@import "../../presentation-primitives.wxss";
+
+.apple-minimal {
   box-sizing: border-box;
-  min-height: 360rpx;
-  padding: 40rpx;
-  border: 1rpx dashed #a1a1a6;
-  border-radius: 24rpx;
-  background: #ffffff;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  padding: 76rpx 52rpx 68rpx;
+  flex-direction: column;
+  background: #f7f5f1;
+  color: #171716;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.renderer-shell__eyebrow {
-  color: #6e6e73;
-  font-size: 20rpx;
-  letter-spacing: 2rpx;
+.apple-minimal__focus-mark {
+  width: 46rpx;
+  height: 4rpx;
+  flex: 0 0 auto;
+  background: #657c78;
 }
 
-.renderer-shell__name {
-  margin-top: 24rpx;
-  font-size: 40rpx;
+.apple-minimal__visual-row {
+  display: flex;
+  margin-top: 48rpx;
+  justify-content: flex-end;
+}
+
+.apple-minimal__visual-object {
+  display: flex;
+  width: 176rpx;
+  min-height: 176rpx;
+  align-items: center;
+  justify-content: center;
+  color: #171716;
+}
+
+.apple-minimal__visual-image {
+  display: block;
+  width: 176rpx;
+  height: 176rpx;
+  border-radius: 6rpx;
+  background: #e8e4dc;
+}
+
+.apple-minimal__visual-symbol,
+.apple-minimal__visual-emoji {
+  font-size: 108rpx;
+  font-weight: 400;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.apple-minimal__visual-text {
+  max-width: 176rpx;
+  font-size: 44rpx;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.apple-minimal__default-graphic {
+  position: relative;
+  width: 176rpx;
+  height: 176rpx;
+}
+
+.apple-minimal__default-orbit {
+  position: absolute;
+  top: 20rpx;
+  right: 16rpx;
+  width: 112rpx;
+  height: 112rpx;
+  border: 1rpx solid #817f7a;
+  border-radius: 50%;
+}
+
+.apple-minimal__default-axis {
+  position: absolute;
+  right: 72rpx;
+  bottom: 12rpx;
+  width: 1rpx;
+  height: 132rpx;
+  background: #b4b0a8;
+  transform: rotate(38deg);
+  transform-origin: bottom center;
+}
+
+.apple-minimal__identity {
+  max-width: 630rpx;
+  margin-top: 54rpx;
+}
+
+.apple-minimal--no-visual .apple-minimal__identity {
+  margin-top: 152rpx;
+}
+
+.apple-minimal--minimal .apple-minimal__identity {
+  margin-top: 176rpx;
+}
+
+.apple-minimal__name {
+  max-width: 100%;
+  font-weight: 600;
+  letter-spacing: -1.5rpx;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.apple-minimal__name--short {
+  font-size: 70rpx;
+}
+
+.apple-minimal__name--long {
+  max-width: 610rpx;
+  font-size: 54rpx;
+  line-height: 1.16;
+}
+
+.apple-minimal__name--extra-long {
+  max-width: 610rpx;
+  font-size: 48rpx;
+  letter-spacing: -0.5rpx;
+  line-height: 1.18;
+}
+
+.apple-minimal--no-visual .apple-minimal__name--short {
+  font-size: 76rpx;
+}
+
+.apple-minimal__headline {
+  max-width: 590rpx;
+  margin-top: 18rpx;
+  color: #5f5d59;
+  font-size: 30rpx;
+  font-weight: 400;
+  line-height: 1.52;
   overflow-wrap: anywhere;
 }
 
-.renderer-shell__message {
-  margin-top: 16rpx;
-  color: #6e6e73;
-  font-size: 24rpx;
-  line-height: 1.6;
+.apple-minimal__tags {
+  max-width: 610rpx;
+  margin-top: 30rpx;
+  color: #3f3e3b;
+  font-size: 23rpx;
+  font-weight: 500;
+  letter-spacing: 0.6rpx;
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+
+.apple-minimal__status {
+  margin-top: auto;
+  padding-top: 92rpx;
+}
+
+.apple-minimal__status-divider {
+  width: 64rpx;
+  height: 1rpx;
+  background: #bdb8af;
+}
+
+.apple-minimal__status-label {
+  margin-top: 22rpx;
+  color: #807d77;
+  font-size: 19rpx;
+  font-weight: 500;
+  letter-spacing: 4rpx;
+  line-height: 1.4;
+}
+
+.apple-minimal__status-text {
+  max-width: 590rpx;
+  margin-top: 12rpx;
+  color: #353431;
+  font-size: 28rpx;
+  font-weight: 400;
+  line-height: 1.58;
+  overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 350px) {
+  .apple-minimal {
+    padding: 60rpx 38rpx 54rpx;
+  }
+
+  .apple-minimal__visual-row {
+    margin-top: 36rpx;
+  }
+
+  .apple-minimal__visual-object,
+  .apple-minimal__visual-image,
+  .apple-minimal__default-graphic {
+    width: 150rpx;
+    min-height: 150rpx;
+  }
+
+  .apple-minimal__visual-image,
+  .apple-minimal__default-graphic {
+    height: 150rpx;
+  }
+
+  .apple-minimal__visual-symbol,
+  .apple-minimal__visual-emoji {
+    font-size: 92rpx;
+  }
+
+  .apple-minimal__identity {
+    margin-top: 44rpx;
+  }
+
+  .apple-minimal--no-visual .apple-minimal__identity {
+    margin-top: 112rpx;
+  }
+
+  .apple-minimal--minimal .apple-minimal__identity {
+    margin-top: 132rpx;
+  }
+
+  .apple-minimal__name--short {
+    font-size: 60rpx;
+  }
+
+  .apple-minimal--no-visual .apple-minimal__name--short {
+    font-size: 64rpx;
+  }
+
+  .apple-minimal__name--long {
+    font-size: 48rpx;
+  }
+
+  .apple-minimal__name--extra-long {
+    font-size: 42rpx;
+  }
+
+  .apple-minimal__status {
+    padding-top: 68rpx;
+  }
 }

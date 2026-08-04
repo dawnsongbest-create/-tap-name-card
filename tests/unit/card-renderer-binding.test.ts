@@ -73,14 +73,23 @@ describe('M2.1-B1 static renderer binding', () => {
     }
   });
 
-  it('creates only complete isolated B1 renderer shell component files', () => {
+  it('keeps one formal Apple renderer and five complete isolated B1 shells', () => {
     for (const rendererKey of RENDERER_KEYS) {
       for (const extension of ['json', 'ts', 'wxml', 'wxss']) {
         expect(
           existsSync(resolve(COMPONENT_ROOT, `renderers/${rendererKey}/index.${extension}`)),
         ).toBe(true);
       }
+    }
 
+    expect(readComponentFile('renderers/apple-minimal/index.wxml')).not.toContain(
+      'B1 RENDERER SHELL',
+    );
+    expect(readComponentFile('renderers/apple-minimal/index.wxml')).toContain(
+      'class="apple-minimal',
+    );
+
+    for (const rendererKey of RENDERER_KEYS.filter((key) => key !== 'apple-minimal')) {
       expect(readComponentFile(`renderers/${rendererKey}/index.wxml`)).toContain(
         'B1 RENDERER SHELL',
       );
