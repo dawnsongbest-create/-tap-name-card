@@ -1,5 +1,149 @@
-<view class="renderer-shell">
-  <view class="renderer-shell__eyebrow">B1 RENDERER SHELL</view>
-  <view class="renderer-shell__name">{{model.identity.displayName || 'Magazine'}}</view>
-  <view class="renderer-shell__message">Static dispatch ready · Formal visual deferred to B2</view>
+<view
+  class="magazine magazine--{{coverMode}} magazine--layout-{{galleryLayout}} {{allGalleryImagesFailed ? 'magazine--all-gallery-failed' : ''}}"
+>
+  <view class="magazine__cover">
+    <view class="magazine__rail">
+      <text class="magazine__rail-label">人物特写</text>
+      <view class="magazine__rail-rule"></view>
+    </view>
+
+    <view class="magazine__cover-grid">
+      <view class="magazine__primary-figure">
+        <view class="magazine__primary-media renderer-ratio--3-4">
+          <image
+            wx:if="{{!primaryImageFailed}}"
+            class="magazine__gallery-image"
+            src="{{primaryFigure.imageRef}}"
+            mode="aspectFill"
+            aria-label="{{primaryFigure.altText}}"
+            data-figure-key="{{primaryFigure.key}}"
+            data-image-ref="{{primaryFigure.imageRef}}"
+            binderror="onGalleryImageError"
+          ></image>
+          <view wx:else class="magazine__image-fallback" aria-label="图片暂时无法显示">
+            <view class="magazine__fallback-block"></view>
+            <view class="magazine__fallback-axis"></view>
+            <view class="magazine__fallback-circle"></view>
+          </view>
+        </view>
+        <view wx:if="{{primaryFigure.caption}}" class="magazine__caption magazine__caption--primary">
+          <text class="magazine__caption-index">图像 01</text>
+          <text class="magazine__caption-text">{{primaryFigure.caption}}</text>
+        </view>
+      </view>
+
+      <view class="magazine__cover-copy">
+        <view class="magazine__name magazine__name--{{nameScale}}">
+          {{model.identity.displayName}}
+        </view>
+        <view class="magazine__headline magazine__headline--{{headlineScale}}">
+          {{model.identity.headline}}
+        </view>
+
+        <view wx:if="{{hasTags}}" class="magazine__tag-index">
+          <view wx:for="{{tagRows}}" wx:key="key" class="magazine__tag-row">
+            <text class="magazine__tag-number">{{item.indexLabel}}</text>
+            <text class="magazine__tag-text">{{item.text}}</text>
+          </view>
+        </view>
+
+        <view
+          wx:if="{{showIdentityVisual && !allGalleryImagesFailed}}"
+          class="magazine__identity-insert"
+        >
+          <image
+            wx:if="{{identityVisualKind === 'IMAGE'}}"
+            class="magazine__identity-image renderer-ratio--1-1"
+            src="{{identityVisualValue}}"
+            mode="aspectFill"
+            aria-label="{{identityVisualAltText}}"
+            data-image-ref="{{identityVisualValue}}"
+            binderror="onIdentityVisualImageError"
+          ></image>
+          <text
+            wx:elif="{{identityVisualKind === 'SYMBOL'}}"
+            class="magazine__identity-symbol"
+            aria-label="{{identityVisualAltText}}"
+          >
+            {{identityVisualValue}}
+          </text>
+          <text
+            wx:elif="{{identityVisualKind === 'EMOJI'}}"
+            class="magazine__identity-emoji"
+            aria-label="{{identityVisualAltText}}"
+          >
+            {{identityVisualValue}}
+          </text>
+          <text
+            wx:elif="{{identityVisualKind === 'TEXT'}}"
+            class="magazine__identity-text"
+            aria-label="{{identityVisualAltText}}"
+          >
+            {{identityVisualValue}}
+          </text>
+          <view
+            wx:elif="{{identityVisualKind === 'DEFAULT_GRAPHIC'}}"
+            class="magazine__identity-default renderer-ratio--1-1"
+            aria-label="{{identityVisualAltText || '抽象编辑图形'}}"
+          >
+            <view class="magazine__identity-default-rule"></view>
+            <view class="magazine__identity-default-block"></view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="magazine__cover-closing">
+      <view class="magazine__cover-closing-accent"></view>
+      <view class="magazine__cover-closing-rule"></view>
+    </view>
+  </view>
+
+  <view wx:if="{{hasBody}}" class="magazine__body">
+    <view wx:if="{{hasBio}}" class="magazine__bio">
+      <view class="magazine__section-label">关于我</view>
+      <view class="magazine__bio-text">{{bioText}}</view>
+    </view>
+
+    <view
+      wx:if="{{secondaryFigures.length}}"
+      class="magazine__secondary-gallery magazine__secondary-gallery--{{galleryLayout}}"
+    >
+      <view class="magazine__section-label magazine__section-label--gallery">图像记录</view>
+      <view class="magazine__secondary-grid">
+        <view
+          wx:for="{{secondaryFigures}}"
+          wx:key="key"
+          class="magazine__secondary-figure magazine__secondary-figure--{{item.role}}"
+        >
+          <view class="magazine__secondary-media renderer-ratio--4-3">
+            <image
+              wx:if="{{!item.imageFailed}}"
+              class="magazine__gallery-image"
+              src="{{item.imageRef}}"
+              mode="aspectFill"
+              aria-label="{{item.altText}}"
+              data-figure-key="{{item.key}}"
+              data-image-ref="{{item.imageRef}}"
+              binderror="onGalleryImageError"
+            ></image>
+            <view wx:else class="magazine__image-fallback" aria-label="图片暂时无法显示">
+              <view class="magazine__fallback-block"></view>
+              <view class="magazine__fallback-axis"></view>
+              <view class="magazine__fallback-circle"></view>
+            </view>
+          </view>
+          <view wx:if="{{item.caption}}" class="magazine__caption">
+            <text class="magazine__caption-index">图像 {{index + 2}}</text>
+            <text class="magazine__caption-text">{{item.caption}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="magazine__body-closing">
+      <view class="magazine__body-closing-rule"></view>
+      <view class="magazine__body-closing-mark"></view>
+    </view>
+  </view>
 </view>

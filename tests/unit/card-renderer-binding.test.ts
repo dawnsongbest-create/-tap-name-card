@@ -73,7 +73,7 @@ describe('M2.1-B1 static renderer binding', () => {
     }
   });
 
-  it('keeps one formal Apple renderer and five complete isolated B1 shells', () => {
+  it('keeps two formal social renderers and four complete isolated B1 shells', () => {
     for (const rendererKey of RENDERER_KEYS) {
       for (const extension of ['json', 'ts', 'wxml', 'wxss']) {
         expect(
@@ -88,8 +88,12 @@ describe('M2.1-B1 static renderer binding', () => {
     expect(readComponentFile('renderers/apple-minimal/index.wxml')).toContain(
       'class="apple-minimal',
     );
+    expect(readComponentFile('renderers/magazine/index.wxml')).not.toContain('B1 RENDERER SHELL');
+    expect(readComponentFile('renderers/magazine/index.wxml')).toContain('class="magazine ');
 
-    for (const rendererKey of RENDERER_KEYS.filter((key) => key !== 'apple-minimal')) {
+    for (const rendererKey of RENDERER_KEYS.filter(
+      (key) => key !== 'apple-minimal' && key !== 'magazine',
+    )) {
       expect(readComponentFile(`renderers/${rendererKey}/index.wxml`)).toContain(
         'B1 RENDERER SHELL',
       );

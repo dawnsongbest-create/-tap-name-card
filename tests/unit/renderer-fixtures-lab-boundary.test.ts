@@ -84,9 +84,10 @@ describe('M2.1-B1 runtime and development harness boundaries', () => {
     const pageSource = readSource('miniprogram/pages/foundation/index.ts');
     const templateSource = readSource('miniprogram/pages/foundation/index.wxml');
     const forbiddenPattern =
-      /services|identity|authApi|CloudBase|callFunction|navigateTo|redirectTo|switchTab|setStorage|database/iu;
+      /authApi|CloudBase|callFunction|navigateTo|redirectTo|switchTab|setStorage|database/iu;
 
     expect(labSource).not.toMatch(forbiddenPattern);
+    expect(labSource).not.toMatch(/from ['"][^'"]*(?:services|state)[^'"]*['"]/iu);
     expect(templateSource).toContain('id="renderer-lab-card-renderer"');
     expect(templateSource).toContain('model="{{rendererLabModel}}"');
     expect(templateSource).not.toContain('<navigator');

@@ -85,14 +85,14 @@ function createGalleryModule(
       layout: 'TWO',
       items: [
         {
-          imageRef: '/assets/templates/fixture-city-walk.png',
+          imageRef: '/assets/templates/fixture-magazine-hero.jpg',
           caption: longCaption,
-          altText: '原创城市街道视觉占位',
+          altText: '日光穿过展览空间入口形成安静的建筑光影',
         },
         {
-          imageRef: '/assets/templates/fixture-exhibition.png',
+          imageRef: '/assets/templates/fixture-social-identity.jpg',
           caption: scenario === 'LONG_TEXT' ? '和朋友一起看完展览后的傍晚' : '展览入口',
-          altText: '原创展览入口视觉占位',
+          altText: '阳光落在浅色石材和金属结构上的建筑光影',
         },
       ],
     },

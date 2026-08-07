@@ -16,9 +16,10 @@ import {
 } from './policy-probe';
 import {
   INITIAL_RENDERER_LAB_SELECTION,
-  RENDERER_LAB_SCENARIOS,
   RENDERER_LAB_TEMPLATE_IDS,
   createRendererLabModel,
+  getRendererLabScenarios,
+  isRendererLabTemplateId,
   readRendererLabSelection,
 } from './renderer-lab';
 
@@ -93,16 +94,23 @@ Page({
     permissionDiagnosticDenied: 'false',
     permissionDiagnosticRequestId: '—',
     rendererLabTemplateIds: RENDERER_LAB_TEMPLATE_IDS,
-    rendererLabScenarios: RENDERER_LAB_SCENARIOS,
+    rendererLabScenarios: getRendererLabScenarios(INITIAL_RENDERER_LAB_SELECTION.templateId),
     rendererLabTemplateId: INITIAL_RENDERER_LAB_SELECTION.templateId,
     rendererLabScenario: INITIAL_RENDERER_LAB_SELECTION.scenario,
     rendererLabModel: createRendererLabModel(INITIAL_RENDERER_LAB_SELECTION),
   },
   onSelectRendererLabTemplate(event: RendererLabSelectionEvent) {
-    const selection = readRendererLabSelection(
-      event.currentTarget.dataset.templateId,
-      this.data.rendererLabScenario,
-    );
+    const templateId = event.currentTarget.dataset.templateId;
+
+    if (!isRendererLabTemplateId(templateId)) {
+      return;
+    }
+
+    const availableScenarios = getRendererLabScenarios(templateId);
+    const scenario = availableScenarios.includes(this.data.rendererLabScenario)
+      ? this.data.rendererLabScenario
+      : 'NORMAL';
+    const selection = readRendererLabSelection(templateId, scenario);
 
     if (!selection) {
       return;
@@ -110,6 +118,8 @@ Page({
 
     this.setData({
       rendererLabTemplateId: selection.templateId,
+      rendererLabScenario: selection.scenario,
+      rendererLabScenarios: availableScenarios,
       rendererLabModel: createRendererLabModel(selection),
     });
   },
