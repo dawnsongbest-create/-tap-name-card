@@ -1,9 +1,13 @@
 # 「碰一下名牌」MVP 数据模型
 
-> 版本：M1.2 final v1.0｜日期：2026-07-27｜状态：`DONE`
+> 版本：RB-01 minimal sync v1.0｜日期：2026-08-08｜状态：逻辑模型保留，Gate 已重排
 > 本文为逻辑模型；M1.2 的 `users/identity_mappings` 已在 development 验证，后续集合的
 > 实际索引、事务和唯一能力仍须在对应里程碑依据官方文档及并发测试确认。
 > 关联：[架构](./ARCHITECTURE.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
+
+RB-01 不删除任何已规划模型，只改变建库/实现顺序：Alpha 使用身份、cards 与 snapshots；
+First MVP Launch 再加入 Greeting/Return/Encounter/Contact/Safety 所需集合；`collections` 仅在
+Collection 进入 First MVP 后段或 Post-launch Gate 时创建；`ai_usage`、`nfc_devices` 继续后置。
 
 ## 1. 全局约定
 
@@ -13,7 +17,8 @@
 - 逻辑删除立即使当前入口失效；不可变快照和必要安全审计按留存策略保留。
 - 业务写操作按接口契约携带 `operationId/clientMutationId`；M1.2 的三个身份接口不携带
   `operationId`。确定性业务键统一做规范化、分隔和哈希，日志仅记摘要。
-- P0 集合：除 `ai_usage`（P1）和 `nfc_devices`（P2）外全部；`encounter_events` P0 只存首次系统事件。
+- 完整逻辑集合按 Fast-track Gate 按需创建；历史 `P0` 标签仅表示功能库存，不表示 Alpha
+  或 First MVP Launch 必须一次建齐。
 
 ## 2. 核心键与唯一语义
 
@@ -70,6 +75,8 @@ CloudBase 若无严格唯一约束：用键本身作为文档 `_id` 或建立 `u
 
 - 目的/关系：名牌可编辑聚合；引用当前公开 `card_snapshots`。
 - 字段：`_id:string*`、`ownerId:string*`、`type:SOCIAL|RESUME*`、`status:DRAFT|REVIEWING|PUBLISHED|REJECTED|HIDDEN|DELETED*`、`title:string*`、`templateId:string*`、`templateVersion:number*`、`draftContent:CardContent* [private]`、`draftRevision:number* [server]`、`draftRecovery?:CardContent [private]`、`pendingReviewContent?:CardContent [private]`、`pendingReviewRevision?:number`、`publishedSnapshotId?:string`、`shareToken:string* [public-entry]`、`isCurrent:boolean*`、`privacy:CardPrivacy*`、`reviewFailure?:{category,field?,imageId?}`、时间字段。
+- Alpha 只依赖 `draftContent`、`draftRevision` 与幂等保存完成 basic revision protection；
+  `draftRecovery` 作为未来复杂 recovery-copy workflow 的可选模型保留，不阻塞 Alpha。
 - 状态：见第 4 节；“审核中新版”用 `status=PUBLISHED + pendingReviewContent` 表达，旧快照继续公开；首次提交可用 `REVIEWING`。
 - 索引/唯一：`shareToken` 唯一；`ownerId+status+updatedAt`；`ownerId+isCurrent` 唯一语义；最多 10 张非删除卡由配置和事务校验。
 - 所有权/可见：仅 owner 可读草稿/审核内容并写；公共接口只经 Token 投影当前审核通过快照及隐私开关；他人看不到 ownerId 内部值。
@@ -142,7 +149,7 @@ CloudBase 若无严格唯一约束：用键本身作为文档 `_id` 或建立 `u
 - 查询/事务：有效申请、冷却、共享读取。
 - 幂等：发送校验 `ACTIVE`/无拉黑/开关/冷却；接受事务校验接收方联系人并写通知；撤销由任一方触发。
 
-### 3.10 `collections`（P0）
+### 3.10 `collections`（First MVP 后段或 Post-launch）
 
 - 目的：静默单向保存名牌，绝不触发社交。
 - 字段：`_id`、`collectionKey`、`ownerId`、`cardOwnerId`、`cardId`、`snapshotId`、`source:MANUAL`、`status:COLLECTED|REMOVED`、时间字段。

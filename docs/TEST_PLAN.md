@@ -1,15 +1,20 @@
 # 「碰一下名牌」MVP 测试计划
 
-> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
+> 版本：RB-01 minimal sync v1.0｜日期：2026-08-08｜状态：Fast-track baseline applied
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[API](./API_SPEC.md)｜[UI](./UI_SPEC.md)｜[任务](./TASKS.md)
 
 ## 1. 目标与范围
 
-证明 P0 在身份、权限、状态、幂等、隐私、弱网和真机条件下形成唯一合法闭环：
+完整测试库存继续保留，但按 Gate 执行。Alpha 验证 Launch Catalog 的 Gallery → Preview →
+Select → Editor → Draft → Publish → Share → Anonymous View；First MVP Launch 再验证
+Greeting → Return → Encounter → Contact Exchange、安全、production 与双平台。Mini Program
+Code、visual export matrix、四套延期模板正式视觉、Resume Editor、AI、NFC，以及未被 launch
+validation 需要的 Collection，不阻塞前一 Gate。六模板 architecture regression tests 始终执行。
+
+First MVP Launch 的唯一合法 Social Loop：
 
 ```text
 匿名浏览（无通知/无账号）
-→ 可选静默收藏（无社交副作用）
 → 登录并选择已发布名牌递出
 → PENDING
 → 接收方原子“接受并回赠”
@@ -18,7 +23,8 @@
 → ACCEPTED（仅选中项可见）
 ```
 
-P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，只验证 P0 中无可见入口/无误调用。测试层级：单元、云函数集成、页面/组件、端到端、双账号手工、真机、staging 上线回归。
+Collection 另行验证静默、单向、私密与无社交副作用，永远不插入上述状态机。测试层级：
+单元、云函数集成、页面/组件、端到端、双账号手工、真机与上线回归。
 
 ## 2. 环境、设备、账号和数据
 
@@ -26,7 +32,7 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 |---|---|
 | local | 纯函数/校验/渲染夹具；无生产数据、无真实密钥 |
 | development | 独立云环境；开发集成测试；可控审核/码适配器 |
-| staging | 独立数据库/存储/微信配置；真实审核、分享、小程序码和双账号验收 |
+| staging | 独立数据库/存储/微信配置；First MVP 验证真实原生分享/deep link/匿名打开和双账号；Post-launch 再验证 Mini Program Code |
 | production | 只做上线前冒烟和回滚验证；不复制 staging 测试身份/数据 |
 | 设备 | 微信开发者工具；至少一台 iPhone；至少一台 Android；记录 OS/微信/基础库版本 |
 | 账号 A | ACTIVE；协议已确认；发布 SOCIAL 卡 A-S1 和可选 RESUME 卡 A-R1；3 个联系人 |
@@ -37,7 +43,8 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 
 固定夹具：
 
-- 六模板及每个模板的最短/最长、中英混排、Emoji、四图、长链接内容。
+- 六模板 architecture fixtures；Launch Catalog 另加正式视觉的最短/最长、中英混排、Emoji、
+  四图、长链接内容。延期模板正式视觉用例在其 Post-MVP Gate 启用。
 - 共同兴趣：标准标签精确相同、相关映射、自定义大小写/空白、`matchEnabled=false`。
 - 私密联系人：微信号、二维码、手机号、私人邮箱；公开项：网站/GitHub。
 - 失败注入：事务每一步、网络超时、重复响应、上传失败、审核拒绝、码生成失败、相册拒绝。
@@ -48,9 +55,10 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 
 - 格式、类型、单元和集成测试 100% 执行且无阻断失败。
 - 核心状态机、权限策略、业务键和公共/私密字段投影分支覆盖。
-- P01—P07、P09—P25 的适用状态通过；P08/P26 在 P0 隐藏。
+- Alpha 与 First MVP Launch 已纳入页面的适用状态通过；后置页面保持不可见/无误调用。
 - A/B 脚本在 staging 的 iPhone 与 Android 各至少完整通过一次。
-- 分享、小程序码、图片保存分别真机验证；仅开发者工具通过不算完成。
+- First MVP Launch 真机验证微信原生分享/deep link/匿名打开；码与图片保存进入
+  Post-launch Gate 后再作为放行条件。
 - 无上线阻断项；未验证能力必须显式记录，不能标 DONE。
 
 ## 4. 单元测试
@@ -61,7 +69,8 @@ P1 AI、相遇事件增强、订阅消息和 P2 NFC 不属于 P0 放行条件，
 - 社交模块各字符/数量限制；总模块≤10、图≤4、自定义文本≤2。
 - RESUME：昵称 1–30、身份 1–40、能力 1–80、技能或项目至少一项；项目≤5、经历≤8、链接≤10、项目简介≤500。
 - 每个 `CardModuleType` 具体 Schema 拒绝未知/错误对象；链接、图片引用、替代文本校验。
-- 六模板类型、版本、导出比例、模块兼容；切换模板保留不兼容内容并标“暂未展示”；配置错误安全回退。
+- 六模板类型、版本、registry/binding 与模块兼容架构回归；Launch Catalog 正式视觉回归；
+  导出比例和延期模板正式视觉后置。
 - 未授权字体/角色素材清单检查。
 
 ### 4.2 状态机与键
@@ -366,7 +375,8 @@ P01—P07、P09—P25 对适用状态逐项测试：
 1. 输入后 2 秒保存；切模块、上传成功、后台、离页保存。
 2. 断网继续编辑显示“已保存在本机”；杀进程/重开恢复。
 3. 恢复网络按队列同步；同 operationId 无重复。
-4. 两设备基于同 revision 编辑触发冲突，服务器旧版可恢复，不静默覆盖。
+4. 同 revision 冲突由 basic revision protection 阻止静默覆盖；multi-device merge UX 和
+   recovery-copy workflow 后置。
 5. 编辑 PUBLISHED 卡时公开 Token 始终显示旧快照。
 
 ### 9.2 图片
@@ -423,9 +433,9 @@ P01—P07、P09—P25 对适用状态逐项测试：
 - 拉黑关闭待处理 greeting/contact，将已接受联系方式变为 REVOKED，阻止新互动并默认隐藏 encounter；解除后仅在无反向 block 时恢复 encounter ACTIVE，不恢复旧请求或联系方式共享。
 - 注销二次确认；Token、当前卡、联系方式立即失效；对方只见“该用户已注销”的历史快照。
 
-## 11. 视觉图片、分享与真机
+## 11. 分享、真机与 Post-launch 视觉图片
 
-### 11.1 导出矩阵
+### 11.1 导出矩阵（Post-launch）
 
 六模板 × 3 比例 × 主题支持 ×（有码/无码）× 内容边界。验证：
 
@@ -436,16 +446,19 @@ P01—P07、P09—P25 对适用状态逐项测试：
 
 ### 11.2 分享/码
 
-- 固定名牌入口始终打开同一张卡；当前名牌入口切换后更新。
-- Token/scene 不暴露 OpenID/内部主键且不可枚举。
-- 好友、群、扫码冷启动/热启动；隐藏/删除/注销后不可用。
-- 小程序码失败时分享仍可用、图片可无码导出。
+- First MVP Launch：微信好友/群原生分享 deep link 冷启动/热启动；固定入口打开同一张卡；
+  隐藏/删除/注销后不可用；Token 不暴露 OpenID/内部主键且不可枚举。
+- Post-launch：当前名牌入口、扫码与 scene、码失败、无码图片导出。
 
 ### 11.3 真机记录
 
 每次记录：构建版本、云环境、机型、OS、微信/基础库版本、账号、时间、结果、截图/视频位置、问题 ID。iPhone 与 Android 均完成 A/B 全链路，不以模拟器代替。
 
 ## 12. A/B 双账号端到端脚本与预期数据
+
+步骤 4—5 只在 Collection 进入当前交付 Gate 时执行；否则跳过，不影响步骤 6 之后的
+Greeting → Return → Encounter → Contact Exchange 验收。Collection 状态不得作为 Social
+Loop 前置条件。
 
 | 步 | 操作 | 预期 UI | 预期数据状态 |
 |---:|---|---|---|
@@ -455,7 +468,7 @@ P01—P07、P09—P25 对适用状态逐项测试：
 | 3 | B 匿名滚动/分享 | 可完整查看与分享 | 仅匿名汇总埋点，不可还原 B |
 | 4 | B 点收藏后取消登录 | P25 可关闭，继续浏览 | 无 collection、无 B user |
 | 5 | B 登录并收藏 A | 收藏成功且静默 | users(B)=ACTIVE；collectionKey(B,A)=COLLECTED；无 greeting/encounter/A 通知 |
-| 6 | B 未有发布卡点“认识一下” | 引导创建/继续草稿/只收藏 | 无 greeting |
+| 6 | B 未有发布卡点“认识一下” | 引导创建/继续草稿/暂不操作；Collection 已启用时可另行收藏 | 无 greeting |
 | 7 | B 创建 B-S1，断网编辑并恢复后发布 | 草稿恢复，审核通过 | cards B-S1 PUBLISHED；snapshot B1；草稿/公开隔离 |
 | 8 | B 选择 B-S1 向 A 递出 | 成功文案，等待回应 | greeting G=PENDING，senderSnapshot=B1,receiverSnapshot=A1,expires=30d；A 一条 GREETING_RECEIVED；collection 不变；无 encounter |
 | 9 | B 重复点击/超时重试 | 显示已经递出 | 仍一条有效 G、一条通知 |
@@ -478,8 +491,9 @@ P01—P07、P09—P25 对适用状态逐项测试：
 ## 13. 上线回归清单
 
 - 账号/协议/受限/注销。
-- 六模板、两类型、草稿、上传、预览、审核、版本、当前名牌。
-- 匿名、分享、码、收藏、图片三比例。
+- Launch Catalog、草稿、上传、预览、审核、版本、当前名牌。
+- 匿名、微信原生分享与 deep link。
+- Post-launch：四套延期模板正式视觉、Resume、码、Collection、图片三比例。
 - Greeting 发/收/取消/拒绝/过期/原子回赠。
 - Encounter、共同兴趣、备注、隐藏。
 - Contact 保存/申请/接受/拒绝/取消/冷却/撤销/读取。
@@ -496,5 +510,11 @@ P01—P07、P09—P25 对适用状态逐项测试：
 - 收藏产生通知/请求/相遇；非 RETURNED 创建相遇；重复请求/相遇/通知。
 - 草稿频繁丢失；审核中覆盖旧版；未审核内容公开。
 - 越权读写草稿、备注、联系人、内部身份；脚本/链接/上传风险。
-- iOS/Android 核心闭环失败，分享/码错误，图片严重错位。
+- 微信原生分享目标错误，或 deep link 无法打开正确名牌。
+- 匿名查看者被强制登录/建号，或无效/未发布/隐藏/删除名牌仍被公开。
+- iOS/Android 核心闭环或主要 runtime 失败。
 - 拉黑后仍可互动；注销后公开入口仍有效。
+
+以下不属于 First MVP blocker，统一进入
+`POST_LAUNCH_VISUAL_SHARING_ENHANCEMENT`：Mini Program Code 不可用或渲染/扫码缺陷、
+visual export 不可用、1:1 / 3:4 / 9:16 导出或保存图片布局缺陷。第 11 节保留完整未来测试矩阵。

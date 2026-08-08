@@ -2,11 +2,11 @@
 
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
-当前状态：M1 Foundation `COMPLETE`；M1.1、M1.2、M1.3、M1.4 均为 `DONE`。
-M2.1 为 `IN_PROGRESS`：M2.1-A Template Domain / Schema / Registry 已完成并通过
-Independent Re-Review，状态为 `DONE`；M2.1-B 为 `IN_PROGRESS`，其中 Renderer
-Foundation（B1）为 `DONE`；B2、B3 和 M2.1-C 均为 `NOT_STARTED`。B1 完成不授予
-B2 Implementation 权限。
+当前状态：M0、M1.1—M1.4、M2.1-A Template Domain / Schema / Registry、M2.1-B1
+Renderer Foundation、Apple Minimal 与 Magazine 均已完成。Original Social B2 为
+`PARTIALLY_DELIVERED / REBASELINED`；Scrapbook、Anime Role 与 Original B3 Resume 为
+`POST_MVP_DEFERRED`。当前 Gate 是 RB-01 Documentation Rebaseline；Review 通过后的下一
+Gate 仅为 `FT-01 M2.1-C FAST TRACK PLANNING`，尚未开始 FT-01 implementation。
 
 M2.1-A 在 `miniprogram/templates/` 内建立本地模板领域：`TemplateDefinition v1`、
 `TemplateRegistryEntry`、`RenderModel v1`、六个稳定模板定义、运行时领域校验，以及
@@ -14,7 +14,27 @@ generic registry / production catalog 分离的本地同步 registry。模板契
 `shared/` 或生成镜像。M2.1-B1 在该领域上建立单一公共 `CardRenderer`、唯一 raw parsing
 ingress、typed preparation/capability boundary、精确静态 renderer binding、renderer-neutral
 `PreparedCardViewModel`、24 个确定性 fixtures、development-only Renderer Lab，以及六个
-最小 child renderer shells。六个 shell 不是正式视觉实现。B1 CloudBase Impact 为 `NONE`。
+最小 child renderer shells。此后 Apple Minimal 与 Magazine 已分别完成正式视觉交付；
+其余四个 shell 继续作为延期模板的架构 binding 保留。B1 CloudBase Impact 为 `NONE`。
+
+## Fast-track MVP 基线
+
+- Launch Catalog：`T-SOCIAL-01` Apple Minimal、`T-SOCIAL-02` Magazine。
+- ALPHA：Gallery → Preview → Select → Editor → Draft → Publish → Share → Anonymous View。
+- FIRST MVP LAUNCH：Alpha + Greeting → Return → Encounter → Contact Exchange，再完成
+  safety、moderation、privacy、production CloudBase、iPhone/Android、release hygiene 与
+  WeChat Review。
+- 首发分享：微信原生分享 → deep link → 匿名公开名牌。Mini Program Code 与
+  1:1 / 3:4 / 9:16 visual export matrix 为 Post-launch。
+- Collection：继续 silent / one-way / private，并与 Greeting 独立；可排在 First MVP 后段或
+  Post-launch。
+- Draft：Alpha 采用 local autosave、明确 saving/saved/failed、登录 owner 云草稿、
+  kill/relaunch recovery、basic revision protection 与 idempotent save；复杂多设备冲突 UX
+  后置。
+- 架构：六个稳定 template ID、六份 TemplateDefinition、六条 registry entry、六个 renderer
+  binding/shell 与 architecture regression tests 全部保留，底层 registry 不缩为两模板。
+- Node 20：`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`，不阻塞 RB-01、
+  FT-01 或当前 MVP development；RB-01 不重新处理 Node 20。
 
 M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
 CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、

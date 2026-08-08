@@ -1,10 +1,10 @@
 # 「碰一下名牌」MVP Development Plan
 
-> **文档版本：M2.1-B1 final closeout v1.0**
-> **日期：2026-07-30**
+> **文档版本：RB-01 Fast-track Rebaseline v1.0**
+> **日期：2026-08-08**
 > **状态：面向 Codex 的正式开发执行计划**  
 > **唯一产品事实来源：`docs/PRD.md`**  
-> **适用阶段：M0—M5**
+> **适用阶段：RB-01—First MVP Launch / Post-launch**
 
 ---
 
@@ -25,11 +25,32 @@
 
 ## 1.1 总体方法
 
-项目采用：
+RB-01 后项目采用两个正式 Gate：
 
-> 文档规划 → 工程基础 → 名牌创建 → 公开浏览与分享 → 社交闭环 → AI 与上线质量
+> ALPHA：Gallery → Preview → Select → Editor → Draft → Publish → Share → Anonymous View
 
-每次只执行一个可独立验收的 Sprint。一个 Sprint 未通过验收，不得进入下一个 Sprint。
+> FIRST MVP LAUNCH：Alpha + Greeting → Return → Encounter → Contact Exchange +
+> Safety / Moderation / Privacy / Production / Device / Release
+
+Alpha 验证用户是否愿意创建、发布、分享名牌。每次只执行一个可独立验收的 Sprint；一个
+Sprint 未通过验收，不得进入下一个 Sprint。
+
+Launch Catalog 仅为 `T-SOCIAL-01` Apple Minimal 与 `T-SOCIAL-02` Magazine，两者均已
+`DELIVERED`。Scrapbook、Anime Role、Professional、Project Portfolio 为
+`POST_MVP_DEFERRED`。延期不删除六个稳定 template ID、六份 TemplateDefinition、六条
+registry entry、六个 renderer binding/shell 或 architecture regression tests，也不得把
+底层 registry 缩为两模板。
+
+Fast-track 约束：
+
+- Draft 采用 local autosave、明确 saved/saving/failed、登录 owner 云草稿、kill/relaunch
+  恢复、basic revision protection 与幂等保存；复杂 merge/recovery UX 不阻塞 Alpha。
+- Social Loop 优先 Greeting → Return → Encounter → Contact Exchange。Collection 保持
+  静默、单向、私密且独立，可后置到 First MVP 后段或 Post-launch。
+- 首发分享只要求微信原生分享 → deep link → Anonymous View；Mini Program Code 与
+  1:1 / 3:4 / 9:16 visual export matrix 为 Post-launch。
+- `CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`，不阻塞 RB-01、FT-01
+  或当前 MVP development；本轮不重新处理 Node 20。
 
 ## 1.2 开发原则
 
@@ -367,7 +388,12 @@ success DTO；远端未知字段和远端 `message/details/stack` 不进入客�
 
 ### 真机
 
-必须至少验证：一台 iPhone、一台 Android、微信开发者工具、staging 云环境、真实分享、小程序码、图片保存。
+First MVP Launch 必须至少验证：一台 iPhone、一台 Android、微信开发者工具、staging 与
+production candidate 环境、微信原生分享、deep-link routing、匿名名牌打开、公开 PageStates
+以及 privacy / moderation / production readiness。
+
+Mini Program Code 生成/扫码和 1:1、3:4、9:16 visual export / image save matrix 属于
+Post-launch，不作为 First MVP Launch 真机完成条件。
 
 ---
 
@@ -411,14 +437,22 @@ success DTO；远端未知字段和远端 `message/details/stack` 不进入客�
 
 # 9. 里程碑总览
 
-| 里程碑 | 目标                     | 主要产物                          |
-| ------ | ------------------------ | --------------------------------- |
-| M0     | 规划和技术决策           | 8 份规划文档、任务树、风险清单    |
-| M1     | 可运行工程和身份基础     | 小程序骨架、云开发、统一基础设施  |
-| M2     | 用户可以创建并发布名牌   | 模板、编辑器、草稿、审核、版本    |
-| M3     | 别人可以浏览、分享和收藏 | 匿名公开页、小程序码、图片导出    |
-| M4     | 完成双向社交闭环         | 请求、回赠、相遇、联系方式、安全  |
-| M5     | P1 AI 和上线质量         | AI 助手、真机测试、安全与审核材料 |
+| 阶段 | 状态 | 目标/主要产物 |
+|---|---|---|
+| M0 | `DONE` | 规划与技术决策 |
+| M1.1—M1.4 | `DONE` | 工程、身份、基础设施、M2 Entry Readiness |
+| M2.1-A / B1 | `DONE` | 六模板 domain/registry 与 renderer foundation；历史 closeout 保留 |
+| Original Social B2 | `PARTIALLY_DELIVERED / REBASELINED` | Apple Minimal、Magazine 已交付；Scrapbook、Anime Role 延期 |
+| Original B3 Resume | `POST_MVP_DEFERRED` | Professional、Project Portfolio 与 Resume Editor 延期 |
+| RB-01 | `READY_FOR_REVIEW` | Documentation Rebaseline |
+| FT-01 M2.1-C Fast Track | `READY_FOR_PLANNING` | Gallery / Preview / Select |
+| A-01 | `NOT_STARTED` | Card / Draft |
+| A-02 | `NOT_STARTED` | Editor / Upload / Live Preview |
+| A-03 | `NOT_STARTED` | Publish / Moderation / Snapshot |
+| A-04 | `NOT_STARTED` | WeChat native Share / deep link / Anonymous View |
+| Alpha Validation | `NOT_STARTED` | 验证创建 → 发布 → 分享意愿 |
+| First MVP Launch | `NOT_STARTED` | Social Loop、安全、生产、双平台、发布与微信审核 |
+| Post-launch | `DEFERRED` | Collection（如未首发）、四延期模板、Resume、码、导出、AI、NFC |
 
 ---
 
@@ -575,8 +609,10 @@ HMAC Secret，并重新验证目标 Runtime、SDK advisory、函数调用权限�
 
 ## Sprint M2.1：模板注册和渲染框架
 
-总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B `IN_PROGRESS`（B1 `DONE`、B2/B3
-`NOT_STARTED`）；M2.1-C `NOT_STARTED`。
+总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B1 `DONE`；Original Social B2
+`PARTIALLY_DELIVERED / REBASELINED`；Original B3 Resume `POST_MVP_DEFERRED`；
+M2.1-C 已重排为 FT-01 M2.1-C Fast Track，当前 `READY_FOR_PLANNING`、implementation
+`NOT_STARTED`。
 
 M2.1-A 已完成 Template Domain / Schema / Registry：
 
@@ -612,30 +648,36 @@ prepareCardRender` trust chain；
   full miniprogram raw 140,333 bytes（约 137.04 KiB），binary media 为 0；
 - CloudBase/identity impact 为 `NONE`，CloudBase manual validation 为 `N/A`。
 
-M2.1-B2 将覆盖 Apple Minimal、Magazine、Scrapbook、Anime Role 四套 Social 正式视觉；
-M2.1-B3 将覆盖 Professional、Project Portfolio 两套 Resume 正式视觉。B2/B3 均为
-`NOT_STARTED` 且未获 implementation approval。M2.1-C 将覆盖 Anonymous Gallery、
-Template Preview、routing 和 browse/select/back/switch UX，状态为 `NOT_STARTED`。
+Original Social B2 已交付 Apple Minimal 与 Magazine 正式视觉；Scrapbook、Anime Role
+改为 `POST_MVP_DEFERRED`。Original B3 的 Professional、Project Portfolio 正式视觉与
+Resume Editor 同样延期。六模板 renderer shell/binding 与架构回归不得删除。FT-01 将覆盖
+Gallery、Template Preview、Select、routing 和 browse/select/back/switch UX；RB-01 不授予
+其 implementation 权限。
 
-## Sprint M2.2：名牌 CRUD 与草稿
+## A-01：Card / Draft
 
-范围：`cards`、`card_snapshots`、CRUD 云函数、本地草稿、云端草稿、冲突恢复。
+范围：Launch Catalog cards、CRUD 云函数、本地 autosave、明确 saving/saved/failed、登录
+owner 云端草稿、kill/relaunch 恢复、basic revision protection、幂等保存。
 
-验收：不能修改他人名牌，最多名牌数服务端配置，断网保留内容，重复保存幂等，删除逻辑删除，Token 不可枚举。
+验收：不能修改他人名牌，断网保留内容，kill/relaunch 可恢复，重复保存幂等，基础 revision
+冲突不静默覆盖，Token 不可枚举。
 
-## Sprint M2.3：社交名牌编辑器
+不做：multi-device merge UX、sophisticated recovery-copy workflow、collaboration-style
+conflict resolution。
+
+## A-02：Editor / Upload / Live Preview
 
 范围：社交必填、视觉主体、标签、自由模块、模块操作、图片上传、表单和实时预览、完整预览。
 
 验收：无真人头像可发布，模块和图片上限正确，服务端重复校验，预览与公开渲染复用核心组件，隐藏不删除数据。
 
-## Sprint M2.4：简历名牌编辑器
+## Post-MVP：Resume Editor
 
 范围：职业身份、能力、目的、经历、项目、作品、链接、私密联系方式入口、项目子页面。
 
 验收：至少一个技能或项目，数量限制正确，私密联系方式不进入公开内容，社交和简历结构互不污染。
 
-## Sprint M2.5：发布、审核和版本
+## A-03：Publish / Moderation / Snapshot
 
 范围：发布校验、内容审核适配、审核状态、审核失败定位、公开快照、新版本审核、当前名牌、发布成功页。
 
@@ -643,31 +685,33 @@ Template Preview、routing 和 browse/select/back/switch UX，状态为 `NOT_STA
 
 ---
 
-# 13. M3：公开浏览、分享与收藏
+# 13. A-04 与 Post-launch 分享范围
 
-## Sprint M3.1：匿名公开名牌
+## A-04：WeChat native Share / deep link / Anonymous View
 
-范围：公开 Token 接口、对外浏览页、首屏人格卡、完整模块、不可用状态、匿名浏览、互动登录引导、举报入口。
+范围：公开 Token 接口、对外浏览页、首屏人格卡、完整模块、不可用状态、匿名浏览、互动登录
+引导、举报入口，以及微信原生分享打开正确 deep link。
 
-验收：未登录完整浏览，不自动建账号，不通知主人，公共返回不含联系方式、OpenID 和草稿。
+验收：未登录完整浏览，不自动建账号，不通知主人，公共返回不含联系方式、OpenID 和草稿；
+真实微信分享打开正确 Launch Catalog 名牌。
 
-## Sprint M3.2：微信分享与小程序码
+## Post-launch：Mini Program Code
 
-范围：分享卡片、固定名牌入口、当前名牌入口、小程序码适配层、失败兜底、来源参数。
+范围：小程序码适配层、失败兜底、来源参数；不阻塞 Alpha 或 First MVP Launch。
 
 验收：分享打开正确名牌，Token 不可枚举，小程序码失败有提示，不虚构平台接口，真机验证前标记待验证。
 
-## Sprint M3.3：视觉名牌图片
+## Post-launch：Visual Export Matrix
 
 范围：3:4、9:16、1:1、内容选择、主题变体、Canvas 2D、小程序码可选、保存相册、权限处理。
 
 验收：中英文、Emoji、长文本不裁切，六模板可导出，iOS/Android 可保存，无码版本可导出，不自动保存。
 
-## Sprint M3.4：收藏
+## First MVP 后段或 Post-launch：Collection
 
 范围：`collections`、收藏接口、快照、列表、不可用状态。
 
-验收：收藏不通知、不创建请求、不创建相遇，重复收藏不重复写入，取消正确，删除后保留不可打开快照。
+验收：收藏不通知、不创建请求、不创建相遇，重复收藏不重复写入，取消正确，删除后保留不可打开快照；不得与 Greeting 合并。
 
 ---
 
@@ -705,9 +749,9 @@ Template Preview、routing 和 browse/select/back/switch UX，状态为 `NOT_STA
 
 ---
 
-# 15. M5：AI 与上线质量
+# 15. First MVP Launch Quality 与 Post-launch AI
 
-## Sprint M5.1：AI 表达助手（P1）
+## Post-launch：AI 表达助手
 
 范围：AI 适配层、三种模式、最多三个候选、用户确认写入、最小上下文、安全审核、使用计数、失败降级。
 
@@ -719,9 +763,14 @@ Template Preview、routing 和 browse/select/back/switch UX，状态为 `NOT_STA
 
 验收：不可越权，公开接口白名单，关键接口防刷，首屏可接受，文字按钮可用，动画可关闭。
 
-## Sprint M5.3：真机和回归
+## 原 Sprint M5.3：真机和回归（REBASELINED）
 
-范围：iPhone、Android、分享、小程序码、图片保存、双账号闭环、弱网、审核失败、注销、拉黑、重复提交。
+First MVP Launch 范围：iPhone、Android、微信原生分享、deep-link routing、匿名名牌打开、
+公开 PageStates、双账号闭环、弱网、审核失败、隐私、审核、production readiness、注销、拉黑、
+重复提交。
+
+原范围中的 Mini Program Code 生成/扫码和 visual export / image save matrix 已重排为
+`REBASELINED / POST_LAUNCH`，未来测试要求保留，但不阻塞 First MVP Launch。
 
 验收：按 PRD 第 37、40 章全部完成，仅开发工具运行不算完成。
 
@@ -729,7 +778,9 @@ Template Preview、routing 和 browse/select/back/switch UX，状态为 `NOT_STA
 
 范围：隐私政策、用户协议、权限文案、审核说明、截图、版本号、staging 清理、production 配置、回滚方案、已知限制。
 
-上线阻断：匿名被强制登录、联系方式泄露、重复数据、草稿频繁丢失、未审核公开、私密越权、真机闭环失败、图片严重错位、注销后仍公开。
+上线阻断：匿名被强制登录/建号、微信原生分享目标或 deep link 错误、无效/未发布/隐藏/删除
+名牌仍公开、联系方式泄露、重复数据、草稿频繁丢失、未审核公开、私密越权、重大真机/
+runtime 失败、注销后仍公开。Mini Program Code 与 visual export 缺陷不属于本 Gate 阻断。
 
 ---
 
@@ -792,15 +843,21 @@ test: add two-account social loop coverage
 
 ## 微信平台能力
 
-必须查阅官方文档并真机验证：匿名打开和登录、分享参数、小程序码、内容安全、保存图片权限、云函数事务与唯一约束、NFC 唤起（P2）。
+First MVP Launch 必须查阅官方文档并真机验证：匿名打开和登录、微信原生分享参数、deep-link
+routing、内容安全、云函数事务与唯一约束。Post-launch 再验证 Mini Program Code、保存图片
+权限和视觉导出矩阵；NFC 唤起继续属于未来 Gate。
 
 ## 图片导出
 
-风险：字体、Emoji、长文本、图片临时地址、机型 Canvas 差异。应尽早做技术 Spike，六模板建立导出测试，并允许无小程序码兜底。
+Post-launch 风险：字体、Emoji、长文本、图片临时地址、机型 Canvas 差异。能力进入
+Post-launch implementation Gate 时为六模板建立导出测试，并允许无小程序码兜底；不阻塞
+Alpha 或 First MVP Launch。
 
 ## 草稿和版本
 
-风险：本地云端冲突、审核中版本覆盖公开内容、上传失败。必须分离 draft、pending、published snapshot，并有版本和恢复策略。
+Alpha 风险：本地/云保存、审核中版本覆盖公开内容、上传失败。必须分离 draft、pending、
+published snapshot，并提供 local autosave、kill/relaunch recovery、basic revision protection
+和幂等保存。复杂多设备 merge 与 recovery-copy UX 后置。
 
 ## 社交状态一致性
 
@@ -818,10 +875,11 @@ P0 闭环后邀请 10—30 名真实用户参加一次兴趣活动测试，观�
 
 # 20. 当前下一步
 
-M1.1、M1.2、M1.3、M1.4 已完成，M1 Foundation Acceptance 为 `PASS`。M2.1 当前为
-`IN_PROGRESS`：M2.1-A `DONE`；M2.1-B `IN_PROGRESS`，其中 Renderer Foundation B1
-`DONE`、B2/B3 `NOT_STARTED`；M2.1-C `NOT_STARTED`。
+M0、M1.1—M1.4、M2.1-A、M2.1-B1、Apple Minimal 和 Magazine 均已完成。Original
+Social B2 为 `PARTIALLY_DELIVERED / REBASELINED`；Original B3 Resume、Scrapbook 和
+Anime Role 为 `POST_MVP_DEFERRED`。
 
-下一步仅是 M2.1-B1 Final Closeout Review。B1 closeout 不表示 M2.1-B 或 M2.1 整体
-完成，也不授予 B2 implementation 权限。B2 必须获得独立、明确批准后才能开始；B3 和
-M2.1-C 同样不得自动进入。staging 必须在 external testing 前建立并完成独立安全门禁。
+当前 Gate 仅为 RB-01 Documentation Rebaseline。RB-01 Review 通过后的下一 Gate 是
+`FT-01 M2.1-C FAST TRACK PLANNING`，范围仅为 Gallery / Preview / Select 规划；不得从
+本文档自动进入 implementation。A-01—A-04、Alpha Validation、First MVP Launch 和
+Post-launch 均须各自进入明确 Gate。

@@ -1,7 +1,7 @@
 # 「碰一下名牌」微信小程序产品需求文档（PRD）
 
-> **文档版本：1.0 Consolidated**  
-> **文档日期：2026-07-24**  
+> **文档版本：1.1 Fast-track Rebaseline**
+> **文档日期：2026-08-08**
 > **文档状态：MVP 开发唯一正式版本**  
 > **产品名称：工作名称，正式品牌名待定**  
 > **目标读者：产品负责人、设计师、开发 Agent、测试 Agent、微信小程序上线负责人**
@@ -65,7 +65,45 @@
 - **双方完成名牌回赠后才创建相遇关系。**浏览、收藏、发送请求均不创建相遇。
 - **完成相遇后才允许申请交换联系方式。**联系方式仍需接收方明确同意，且双方各自选择愿意提供的联系方式。
 - **第一版不建设站内聊天。**共同兴趣仅用于帮助现实交流和提供开场建议。
-- **第一版不依赖 NFC 硬件上线。**NFC 为未来载体，MVP 先通过微信分享、小程序码和视觉图片完成验证。
+- **第一版不依赖 NFC 硬件上线。**NFC 为未来载体；首次上线先通过微信原生分享和匿名公开名牌完成验证，小程序码与视觉图片后置。
+
+### 0.5 RB-01 Fast-track 覆盖决策
+
+本节是 2026-08-08 产品 Review 后的最新交付基线；当本文档后续章节仍使用历史
+`P0/P1/P2` 或 `M2/M3/M4/M5` 排期时，以本节的 Gate 和 Launch Catalog 为准。延期表示
+改变交付顺序，不表示删除产品能力或底层模板架构。
+
+**Launch Catalog：**
+
+- `T-SOCIAL-01` Apple Minimal：`DELIVERED`；
+- `T-SOCIAL-02` Magazine：`DELIVERED`。
+
+**Post-MVP delivery catalog：**
+
+- `T-SOCIAL-03` Scrapbook；
+- `T-SOCIAL-04` Anime Role；
+- `T-RESUME-01` Professional；
+- `T-RESUME-02` Project Portfolio。
+
+六个稳定 template ID、六份 `TemplateDefinition`、六条 registry entry、六个 renderer
+binding/shell 和对应 architecture regression tests 必须继续保留。首发只开放两套正式视觉，
+不得把底层 production registry 缩减为两模板。
+
+交付采用两个 Gate：
+
+1. **ALPHA**：Gallery → Preview → Select → Editor → Draft → Publish → Share →
+   Anonymous View，验证用户是否愿意创建、发布并分享名牌。
+2. **FIRST MVP LAUNCH**：Alpha + Greeting → Return → Encounter → Contact Exchange，
+   并完成 safety、moderation、privacy、production CloudBase、iPhone/Android、release
+   hygiene 和 WeChat Review。
+
+Alpha / First MVP Launch 的分享最小链路是微信原生分享 → deep link → 匿名公开名牌。
+小程序码和 1:1、3:4、9:16 视觉导出为 Post-launch enhancement。Collection 继续保持静默、
+单向、私密且独立于 Greeting，但不阻塞核心 Social Loop，可排在 First MVP 后段或
+Post-launch。AI 与 NFC 均为 Post-launch。
+
+`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`。该 Node 20 隔离门禁限制
+不阻塞 RB-01、FT-01 或当前 MVP development；RB-01 不重新处理 Node 20。
 
 ---
 
@@ -102,9 +140,13 @@
 第一阶段：
 
 - 微信小程序；
-- 微信小程序卡片分享；
+- 微信原生分享卡片；
+- deep link 打开匿名公开名牌。
+
+Post-launch enhancement：
+
 - 小程序码；
-- 适合社交媒体发布的纯视觉名牌图片。
+- 1:1、3:4、9:16 视觉名牌图片。
 
 未来扩展：
 
@@ -294,14 +336,20 @@
 
 当前阶段为小规模可用 MVP。预期早期注册用户为数百至数千，同时在线用户较少。
 
-MVP 目标是：
+当前交付顺序分为 Alpha、First MVP Launch 和 Post-launch；0.5 节是这些 Gate 的权威定义。
+First MVP Launch 目标是：
 
 - 可以在真实 iPhone 和 Android 手机上运行；
 - 可以完成微信小程序审核和小范围发布；
-- 可以邀请真实用户完成创建、分享、认识、回赠和联系方式交换；
+- 以 Apple Minimal 与 Magazine 邀请真实用户完成创建、分享、认识、回赠和联系方式交换；
 - 不为尚未出现的大规模用户提前建设复杂架构。
 
-## 6.2 P0：核心可用 MVP，必须实现
+## 6.2 完整功能需求清单（按 Gate 分期）
+
+以下清单保留完整产品需求，但不再表示每一项都阻塞 Alpha 或 First MVP Launch。交付顺序
+以 0.5 节为准：Launch Catalog 仅 Apple Minimal / Magazine；Greeting → Return →
+Encounter → Contact Exchange 为 First MVP Launch 核心 Social Loop；Collection 可后置；
+小程序码、视觉导出、四套延期模板、AI 和 NFC 均不阻塞第一次上线。
 
 ### 账号与安全
 
@@ -326,16 +374,19 @@ MVP 目标是：
 - 设置当前名牌；
 - 修改已发布名牌时保留旧公开版本，直到新版本审核通过。
 
-### MVP 模板
+### 完整模板架构与分期
 
-社交名牌：
+Launch Catalog：
 
 1. Apple Minimal；
 2. 杂志人物页；
+
+Post-MVP（保留定义、registry、binding/shell 与架构回归）：
+
 3. 手账拼贴；
 4. 动漫角色卡。
 
-简历名牌：
+Post-MVP 简历名牌：
 
 1. 极简职业卡；
 2. 项目作品卡。
@@ -344,10 +395,9 @@ MVP 目标是：
 
 - 未登录用户匿名浏览完整公开名牌；
 - 微信小程序卡片分享；
-- 生成小程序码；
-- 生成 3:4、9:16、1:1 视觉名牌图片；
-- 可选择图片中是否包含小程序码；
-- 收藏名牌；
+- Post-launch：生成小程序码；
+- Post-launch：生成 3:4、9:16、1:1 视觉名牌图片，可选包含小程序码；
+- Collection：保持独立，可排在 First MVP 后段或 Post-launch；
 - 分享按钮和举报入口。
 
 ### 社交闭环
@@ -372,7 +422,7 @@ MVP 目标是：
 - 联系方式申请通过或未通过；
 - 名牌审核结果。
 
-## 6.3 P1：增强 MVP 体验，P0 稳定后实现
+## 6.3 Post-launch：增强体验
 
 - AI 表达助手；
 - 更丰富的共同兴趣映射；
@@ -384,7 +434,7 @@ MVP 目标是：
 - 运营所需的轻量审核工具；
 - 视觉图片更多主题变体。
 
-## 6.4 P2：未来规划，不阻塞 MVP
+## 6.4 Post-MVP：未来规划，不阻塞首次上线
 
 - NFC 社交贴片实际绑定；
 - NFC 当前名牌模式和固定名牌模式；
@@ -503,6 +553,10 @@ MVP 目标是：
 | P24 | 举报页 | 是 | P0 |
 | P25 | 登录引导弹层 | 否 | P0 |
 | P26 | NFC 设备管理 | 是 | P2 |
+
+上表保留完整页面编号与功能优先级。Fast-track Gate 覆盖关系为：P04/P05 在 FT-01 仅展示
+Launch Catalog；P07 为 Post-MVP；P18 为 Post-launch；P20 Collection 可在 First MVP
+后段或 Post-launch；P12—P17 在 First MVP Launch 实现。
 
 ---
 
@@ -682,9 +736,11 @@ MVP 目标是：
 
 支持拖动、缩放和叠放元素。P2 规划，MVP 不实现。
 
-## 10.4 MVP 社交模板
+## 10.4 社交模板
 
 ### T-SOCIAL-01 Apple Minimal
+
+Launch Catalog，当前状态：`DELIVERED`。
 
 - 编辑等级：L1；
 - 大量留白；
@@ -697,6 +753,8 @@ MVP 目标是：
 
 ### T-SOCIAL-02 杂志人物页
 
+Launch Catalog，当前状态：`DELIVERED`。
+
 - 编辑等级：L2；
 - 大图优先；
 - 杂志封面式标题；
@@ -706,12 +764,16 @@ MVP 目标是：
 
 ### T-SOCIAL-03 手账拼贴
 
+Post-MVP delivery catalog；延期不删除底层定义、registry entry 或 renderer binding/shell。
+
 - 编辑等级：L2；
 - 照片、贴纸、胶带和便签元素；
 - 支持一至四张生活图片；
 - 只支持预设布局与装饰，不做自由画布。
 
 ### T-SOCIAL-04 动漫角色卡
+
+Post-MVP delivery catalog；延期不删除底层定义、registry entry 或 renderer binding/shell。
 
 - 编辑等级：L2；
 - 角色主视觉；
@@ -721,7 +783,10 @@ MVP 目标是：
 - 轻量属性面板；
 - 不得内置未经授权的版权角色素材。
 
-## 10.5 MVP 简历模板
+## 10.5 Post-MVP 简历模板
+
+两套简历模板均为 `POST_MVP_DEFERRED`。稳定 ID、定义、registry entry、renderer
+binding/shell 和 architecture regression tests 继续保留。
 
 ### T-RESUME-01 极简职业卡
 
@@ -842,10 +907,13 @@ MVP 目标是：
 
 要求：
 
-- 远端保存失败时保留本地临时草稿；
-- 网络恢复后重试；
-- 冲突时以用户当前设备最近明确编辑版本为主，但必须保留服务器旧版本用于恢复；
+- 本地自动保存优先，保存态必须明确区分“正在保存 / 已保存 / 保存失败”；
+- 登录 owner 同步云端草稿，远端失败时保留本地草稿并允许重试；
+- kill/relaunch 后可恢复；
+- 使用基础 revision protection 和幂等保存，避免重复提交或静默覆盖；
 - 不得静默丢失内容。
+
+以下不阻塞 Alpha：多设备 merge UX、复杂 recovery-copy workflow、协作式冲突解决。
 
 ## 11.4 图片上传
 
@@ -1741,7 +1809,7 @@ ACCEPTED
 
 ---
 
-# 23. 视觉名牌图片
+# 23. 视觉名牌图片（Post-launch enhancement）
 
 ## 23.1 目标
 
@@ -2998,6 +3066,11 @@ interface CloudFunctionResult<T> {
 
 # 37. 测试与验收
 
+本章保留完整验收库，但按 0.5 节 Gate 执行。Alpha 只要求 Launch Catalog 的创建至匿名
+浏览链路；First MVP Launch 再加入 Social Loop、安全、生产与双平台发布门禁；六模板正式
+视觉、简历编辑器、小程序码、视觉导出矩阵、Collection（若未纳入 launch validation）、AI
+和 NFC 不得作为前一 Gate 的阻断。六模板 architecture regression tests 始终保留。
+
 ## 37.1 创建流程
 
 - 新用户创建社交名牌；
@@ -3057,7 +3130,7 @@ interface CloudFunctionResult<T> {
 - 已过期请求不能回赠；
 - 注销后公开入口失效。
 
-## 37.6 图片导出
+## 37.6 图片导出（Post-launch）
 
 - 三种比例均正确；
 - 中英文、Emoji 和长文本不裁切；
@@ -3066,19 +3139,25 @@ interface CloudFunctionResult<T> {
 - 无授权时正确提示；
 - iOS 和 Android 可保存。
 
-## 37.7 真机要求
+## 37.7 First MVP Launch 真机要求
 
-MVP 完成必须至少验证：
+First MVP Launch 完成必须至少验证：
 
 - 一台 iPhone；
 - 一台 Android；
 - 微信开发者工具；
-- staging 云环境；
-- 真实分享和小程序码链路。
+- staging 与 production candidate 环境；
+- 微信原生分享指向正确名牌；
+- deep link 可打开正确的匿名公开名牌；
+- 无效、未发布、已隐藏、已删除名牌进入正确的公开 PageState；
+- 匿名打开不会强制登录或创建账号。
+
+Mini Program Code 生成/扫码和 1:1、3:4、9:16 视觉导出/保存图片真机矩阵属于
+Post-launch enhancement，按 37.6 节验收，不作为 First MVP Launch 完成或阻断条件。
 
 仅在开发工具运行不算完成。
 
-## 37.8 上线阻断问题
+## 37.8 First MVP Launch 阻断问题
 
 出现任一项不得上线：
 
@@ -3090,79 +3169,63 @@ MVP 完成必须至少验证：
 - 可读取或修改他人私密数据；
 - 明显脚本注入或链接风险；
 - iOS 或 Android 无法完成核心闭环；
-- 图片严重错位；
+- 微信原生分享目标错误，或 deep link 无法打开正确名牌；
+- 无效、未发布、已隐藏或已删除名牌仍被公开；
+- Launch Catalog 的公开页面渲染严重错位；
 - 注销后个人信息仍公开。
 
 ---
 
-# 38. 开发里程碑
+# 38. 开发里程碑（Fast-track Rebaseline）
 
-## M0：规划与文档
+## 38.1 已完成且保留的历史里程碑
 
-输出：
+- M0；
+- M1.1—M1.4；
+- M2.1-A Template Domain / Schema / Registry；
+- M2.1-B1 Renderer Foundation；
+- Apple Minimal 正式视觉；
+- Magazine 正式视觉。
 
-- `MVP_SCOPE.md`；
-- `ARCHITECTURE.md`；
-- `DATA_MODEL.md`；
-- `API_SPEC.md`；
-- `UI_SPEC.md`；
-- `TEST_PLAN.md`；
-- `TASKS.md`；
-- `DECISIONS.md`。
+M2.1-A / B1 closeout 和 Apple / Magazine checkpoint 不得重写。原 Social B2 记为
+`PARTIALLY_DELIVERED / REBASELINED`；原 B3 Resume 记为 `POST_MVP_DEFERRED`。
 
-不得编码完整业务。
+## 38.2 NOW
 
-## M1：工程基础与用户身份
+- RB-01 Documentation Rebaseline。
 
-- 微信原生小程序 TypeScript 工程；
-- 云开发配置；
-- 环境隔离；
-- 用户身份；
-- 统一返回和错误；
-- 日志；
-- 基础页面状态组件；
-- 格式、类型和测试工具。
+## 38.3 BEFORE ALPHA
 
-## M2：模板与名牌创建
+1. FT-01 M2.1-C Fast Track：Gallery / Preview / Select；
+2. A-01 Card / Draft；
+3. A-02 Editor / Upload / Live Preview；
+4. A-03 Publish / Moderation / Snapshot；
+5. A-04 WeChat native share / deep link / Anonymous View；
+6. Alpha Validation：验证用户是否愿意创建、发布、分享名牌。
 
-- 名牌类型和模板；
-- 社交编辑器；
-- 简历编辑器；
-- 草稿；
-- 实时预览；
-- 发布和版本；
-- 当前名牌；
-- 内容审核适配。
+## 38.4 BEFORE FIRST MVP LAUNCH
 
-## M3：公开浏览与分享
+1. Greeting；
+2. Return；
+3. Encounter；
+4. Contact Vault；
+5. Contact Exchange；
+6. Safety、moderation、privacy；
+7. production CloudBase；
+8. iPhone / Android；
+9. release hygiene 与 WeChat Review。
 
-- 匿名公开页；
-- 分享卡片；
-- 小程序码；
-- 视觉图片；
-- 收藏。
+## 38.5 POST-LAUNCH
 
-## M4：社交闭环
+- Collection（若 launch validation 不要求）；
+- Scrapbook、Anime Role、Professional、Project Portfolio；
+- Resume Editor；
+- Mini Program Code；
+- 1:1 / 3:4 / 9:16 visual export matrix；
+- AI；
+- NFC。
 
-- 认识请求；
-- 接受并回赠；
-- 相遇册；
-- 共同兴趣；
-- 联系方式；
-- 通知；
-- 拉黑和举报。
-
-## M5：AI 与上线质量
-
-- AI 表达助手；
-- 全流程测试；
-- 权限和隐私测试；
-- 真机适配；
-- 性能；
-- 微信审核材料；
-- NFC 数据结构预留。
-
-每个里程碑必须先验收，再进入下一阶段。
+每个 Gate 必须先验收，再进入下一 Gate。延期项不得从底层六模板 registry 或架构回归中删除。
 
 ---
 
@@ -3203,7 +3266,7 @@ MVP 完成必须至少验证：
 
 ---
 
-# 40. MVP 完成定义
+# 40. First MVP Launch 完成定义
 
 同时满足以下条件才视为完成：
 
@@ -3211,10 +3274,10 @@ MVP 完成必须至少验证：
 2. iPhone 真机可运行；
 3. Android 真机可运行；
 4. 用户可创建并发布社交名牌；
-5. 用户可创建并发布简历名牌；
+5. Apple Minimal 与 Magazine 两套 Launch Catalog 均可创建并发布；
 6. 未登录用户可浏览；
-7. 分享和小程序码可打开正确名牌；
-8. 视觉图片可保存；
+7. 微信原生分享可通过 deep link 打开正确的匿名公开名牌；
+8. 小程序码与视觉导出矩阵已记录为 Post-launch enhancement，不阻塞本 Gate；
 9. 两个账号可完成认识、回赠和相遇；
 10. 两个账号可申请并确认交换联系方式；
 11. 草稿不丢失；
@@ -3222,7 +3285,7 @@ MVP 完成必须至少验证：
 13. 用户不能读取他人私密信息；
 14. 拉黑和举报可用；
 15. 账号注销后公开入口失效；
-16. 所有 P0 验收用例通过；
+16. 所有进入 First MVP Launch Gate 的验收用例通过；
 17. 文档与实际代码一致。
 
 完成代码但无法在真实手机走完核心流程，不视为完成。

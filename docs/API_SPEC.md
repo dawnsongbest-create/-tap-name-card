@@ -1,8 +1,13 @@
 # 「碰一下名牌」云函数 API 规格
 
-> 版本：M2.1-A final closeout v1.0｜日期：2026-07-29｜状态：M2.1 `IN_PROGRESS`
+> 版本：RB-01 minimal sync v1.0｜日期：2026-08-08｜状态：Fast-track baseline applied
 > 本文定义逻辑契约，不声明任何未验证的微信/CloudBase API 名称。  
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[UI](./UI_SPEC.md)｜[测试](./TEST_PLAN.md)
+
+RB-01 保留本文件的完整逻辑契约，但改变实现 Gate：Alpha 只实现 Launch Catalog 的
+Card/Draft/Publish/Public read；First MVP Launch 增加 Greeting/Return/Encounter/Contact/
+Safety。`collection*` 可排在 First MVP 后段或 Post-launch；`shareGenerateMiniCode`、视觉
+导出、AI、NFC 为 Post-launch。表内历史 `P0` 标签不再单独表示第一次上线阻断。
 
 ## 1. 通用协议
 
@@ -89,7 +94,7 @@ parser 的输出。
 | `accountGetMe` P0 | `input:{}` → `CurrentUserView` | 登录；仅本人；不接受身份字段 | R users；只读；无 operationId | `AUTH_REQUIRED/USER_NOT_FOUND/ACCOUNT_DELETED/SERVICE_UNAVAILABLE`；响应无 openId；失败回匿名/不可用 |
 | `accountAcceptPolicies` P0 | `input:{acceptedTermsVersion:string,acceptedPrivacyVersion:string}` → `{user:CurrentUserView,replayed:boolean}` | 登录；两项必须一次同时确认且必须等于当前服务端版本；RESTRICTED 可调用 | W users；两版本和两时间原子写；相同版本状态幂等；不解除 RESTRICTED；无 operationId | `AUTH_REQUIRED/USER_NOT_FOUND/ACCOUNT_DELETED/POLICY_VERSION_UNSUPPORTED/INVALID_INPUT/SERVICE_UNAVAILABLE`；版本过期后关键业务写阻止，但 getMe/阅读/确认仍可用 |
 | `accountDelete` P0（M4） | `input:{confirm:true,meta}` → `Ack` | 登录、本人、二次确认 | W users/cards/contacts/blocks；先 DELETED 和公开/私密入口失效，后续清理可恢复；恢复/幂等字段在 M4 决定 | 严格；`INVALID_INPUT/DUPLICATE_ACTION/SERVICE_UNAVAILABLE`；故障注入与重放；未知结果调用 accountGetMe/公共 Token 验证 |
-| `templateList` P0 | `input:{cardType?:CardType}` → `{templates:TemplateSummary[]}` | 匿名可读；只返回启用的仓库配置 | R 版本化模板注册；无数据库写 | 可缓存；`INVALID_INPUT/SERVICE_UNAVAILABLE`；六模板与类型过滤；失败用安全内置配置/重试 |
+| `templateList` P0 | `input:{cardType?:CardType}` → `{templates:TemplateSummary[]}` | 匿名可读；产品 Gallery 按 Gate 只返回已开放模板 | R 六模板版本化 registry；无数据库写 | 可缓存；`INVALID_INPUT/SERVICE_UNAVAILABLE`；Launch Catalog 与六模板架构约束分别测试 |
 | `templateGet` P0 | `input:{templateId:string,version?:number}` → `{template:CardTemplate}` | 匿名可读；ID/版本白名单 | R 模板注册；配置错误安全回退并记录 | 可缓存；`RESOURCE_NOT_FOUND/SERVICE_UNAVAILABLE`；版本兼容；失败返回列表 |
 
 M2.1-A 实现状态说明：上表保留历史逻辑 API 设计，但 `templateList` 和 `templateGet`
@@ -149,7 +154,8 @@ interface CardSubmitReviewInput { cardId:string; expectedDraftRevision:number; m
 2. 每种模块使用具体 Schema；社交最多 10 模块、图片最多 4、自定义文本最多 2；简历项目最多 5、经历最多 8、公开链接最多 10，字符限制遵循 PRD。
 3. 更换模板不删除不兼容模块；响应可附兼容警告，客户端显示“暂未展示”。
 4. 已发布卡更新仅改变 draft；`publishedSnapshotId` 不变。
-5. 冲突返回 `INVALID_INPUT` 的结构化 `details:{kind:'REVISION_CONFLICT',serverRevision,recoveryRef}`（不暴露内部数据）；客户端保留本地版本并提供恢复/重试。
+5. Alpha 冲突返回最小结构化 `details:{kind:'REVISION_CONFLICT',serverRevision}`（不暴露
+   内部数据）；客户端保留本地版本并允许重试。复杂 recovery-copy / merge UX 后置。
 
 ### 3.2 `cardSubmitReview` 详细规则
 
@@ -168,7 +174,7 @@ interface CardSubmitReviewInput { cardId:string; expectedDraftRevision:number; m
 - 只记录匿名汇总来源事件；不得形成主人可见访客记录或通知。
 - 匿名点击收藏/认识时客户端打开 P25；浏览本身不调用建号接口。
 
-## 4. 收藏
+## 4. 收藏（First MVP 后段或 Post-launch）
 
 | 函数 | 契约 | 权限/前置 | 数据/幂等 | 频率、错误、测试、失败 |
 |---|---|---|---|---|
@@ -293,7 +299,7 @@ interface GreetingView {
 
 | 函数 | 契约 | 权限/数据/幂等 | 频率、错误、测试、失败 |
 |---|---|---|---|
-| `shareGenerateMiniCode` P0 | `{cardId,mode:'FIXED_CARD'|'CURRENT_CARD',meta}` → `{fileId,expiresAt?}` | 登录/owner；卡 PUBLISHED/allowShare；服务端生成受控 scene；可按内容哈希缓存 | 严格；`CARD_NOT_PUBLISHED/RATE_LIMITED/SERVICE_UNAVAILABLE`; 真机扫码固定/当前；失败允许分享或无码导出 |
+| `shareGenerateMiniCode` Post-launch | `{cardId,mode:'FIXED_CARD'|'CURRENT_CARD',meta}` → `{fileId,expiresAt?}` | 登录/owner；卡 PUBLISHED/allowShare；服务端生成受控 scene；可按内容哈希缓存 | 严格；`CARD_NOT_PUBLISHED/RATE_LIMITED/SERVICE_UNAVAILABLE`; 真机扫码固定/当前；失败允许分享或无码导出 |
 | `aiAssistCardField` P1 | `{cardType,fieldType,input,relatedFields?,tone?,maxLength,meta}` → `{fieldType,candidates:{text,tone,length}[],suggestedTags?,safetyStatus}` | 登录；最小上下文；最多三候选；不写 cards；W ai_usage | 日限额；`AI_FAILED/RATE_LIMITED`; P0 功能关闭；失败保留原文 |
 | `nfcResolve` P2 | `{deviceToken}` → `{mode,cardToken}` | 匿名；随机 Token；设备 BOUND 且目标可用 | 严格防枚举；P0 不部署 |
 | `nfcBind` P2 | `{deviceToken,mode,fixedCardId?,meta}` → `Ack` | 登录 owner；设备可绑定；固定卡本人 PUBLISHED | 设备 Token 唯一/事务；P0 不部署 |

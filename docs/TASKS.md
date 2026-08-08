@@ -1,12 +1,13 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
+> 版本：RB-01 Fast-track Rebaseline v1.0｜日期：2026-08-08｜状态：RB-01 `READY_FOR_REVIEW`
 >
-> 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE`
+> 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE | DEFERRED | REBASELINED`
 >
-> 当前规则：M0 已人工通过；M1-01、M1-02、M1-03、M1-04 均为 `DONE`；M2.1-A
-> `DONE`，M2.1-B `IN_PROGRESS`（B1 `DONE`、B2/B3 `NOT_STARTED`），M2.1-C
-> `NOT_STARTED`，M2.1 整体 `IN_PROGRESS`。
+> 当前规则：M0、M1.1—M1.4、M2.1-A、M2.1-B1、Apple Minimal、Magazine 均已完成；
+> Original Social B2 为 `PARTIALLY_DELIVERED / REBASELINED`；Scrapbook、Anime Role 与
+> Original B3 Resume 为 `POST_MVP_DEFERRED`。下一 implementation gate 是 FT-01，但
+> RB-01 只把 FT-01 Planning 标记为 `READY`，不授予 implementation 权限。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -125,11 +126,15 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 
 ## 4. M2 模板、编辑器与发布
 
+> 本节至第 8 节保留 RB-01 前的任务拆分与历史验收，不删除 M2.1-A/B1 checkpoint。
+> 未启动任务的执行顺序已由第 9 节 Fast-track 任务树覆盖，不得按旧编号自动开工。
+
 ### M2-01 模板注册与渲染
 
 - 元数据：M2｜M2.1｜P0｜依赖 M1-04。
-- 总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B `IN_PROGRESS`（B1 `DONE`、B2/B3
-  `NOT_STARTED`）；M2.1-C `NOT_STARTED`。
+- 总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B1 `DONE`；Original Social B2
+  `PARTIALLY_DELIVERED / REBASELINED`；Original B3 Resume `POST_MVP_DEFERRED`；
+  M2.1-C 由 FT-01 接续。
 - M2.1-A 已完成：`miniprogram/templates/` 本地 `TemplateDefinition v1`、
   `TemplateRegistryEntry`、`RenderModel v1`、最小六模板 module contract、运行时领域校验、
   六个稳定模板定义、本地同步 registry、generic registry / production catalog 分离、
@@ -149,19 +154,18 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
   Architecture Review、DevTools Manual Gate 和 Post-DevTools Re-Review 均为 `PASS`。
 - B1 CloudBase/identity impact：`NONE`。没有 Cloud Function、集合、存储、权限、环境、
   deployment 或身份行为变更；CloudBase manual validation 为 `N/A`。
-- M2.1-B2（`NOT_STARTED`）：Apple Minimal、Magazine、Scrapbook、Anime Role 四套
-  Social 正式视觉；未获 implementation approval。
-- M2.1-B3（`NOT_STARTED`）：Professional、Project Portfolio 两套 Resume 正式视觉；
-  未获 implementation approval。
-- M2.1-C（`NOT_STARTED`）：Anonymous Gallery、Template Preview、routing 和
-  browse/select/back/switch UX。
+- Original M2.1-B2：Apple Minimal、Magazine 正式视觉已 `DELIVERED`；Scrapbook、
+  Anime Role 为 `POST_MVP_DEFERRED`。因此原工作包记录为
+  `PARTIALLY_DELIVERED / REBASELINED`。
+- Original M2.1-B3：Professional、Project Portfolio 为 `POST_MVP_DEFERRED`。
+- M2.1-C：重排为 FT-01 M2.1-C Fast Track；Planning `READY`，implementation
+  `NOT_STARTED`。
 - Cloud/API：当前模板事实来源是 app-bundled local versioned production registry；
   `templateList`/`templateGet` Cloud Functions `DEFERRED`，不得同时维护本地和云端两套
   当前 catalog 事实来源。
 - 不做：Card persistence、Draft、Snapshot、Editor、Upload、Publish、Share、Collection、
   Greeting、Encounter、Contact exchange、Analytics、AI、NFC、Dynamic template platform。
-- 下一门禁：M2.1-B1 Final Closeout Review。通过后仍须获得独立、明确的 B2
-  implementation approval；本记录不授权 B2、B3 或 M2.1-C。
+- 下一门禁：RB-01 Review 后进入 FT-01 Planning；本记录不授权 FT-01 implementation。
 
 ### M2-02 名牌 CRUD 与草稿
 
@@ -328,3 +332,88 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 - PRD 31.2 所有 P0 函数均映射到 M1—M4；`encounterAddEvent` 与 AI 为 P1，`nfc*` 为 P2。
 - P0 集合均映射；`ai_usage/nfc_devices` 不在 P0 建库。
 - 每个 P0 域都有自动、手工和对应真机要求；详细用例见 TEST_PLAN。
+
+## 9. RB-01 Fast-track 权威任务树
+
+本节覆盖第 4—8 节中所有尚未开始的旧排期；历史 `DONE` 结果继续有效。
+
+### RB-01 Documentation Rebaseline
+
+- 依赖：产品 Fast-track Review 已批准；Git 基线 `main` / `af5369d5065bf4a224f7b8a0daa882b1b0eb03ce`。
+- 范围：六个权威/执行文档及存在直接冲突的工程文档最小同步。
+- 不做：源码、Cloud Functions、tests、package、config、template implementation、Node 20、FT-01。
+- 验收：Apple / Magazine=`DELIVERED`；Original Social B2=`PARTIALLY_DELIVERED / REBASELINED`；
+  B3 与四延期模板状态正确；两个 Gate、Draft/Social/Sharing 简化和下一 Gate 一致；历史
+  closeout 未重写；Apple `d4f184b` / Magazine `af5369d` checkpoint 保留；
+  `git diff --check` 与 `git status --short` 已执行。
+- 状态：`READY_FOR_REVIEW`。
+
+### FT-01 M2.1-C Fast Track — Gallery / Preview / Select
+
+- 依赖：RB-01 Review 通过并获得独立 planning approval。
+- 范围：Launch Catalog Gallery、Template Preview、Select、routing、browse/select/back/switch UX。
+- 架构边界：产品 UI 只开放 Apple Minimal / Magazine；六 TemplateDefinitions、六 registry
+  entries、六 renderer bindings/shells 与 architecture regression tests 全部保留。
+- 不做：Editor、Draft、Upload、Publish、Share、Collection、Social Loop、四延期模板正式视觉。
+- 状态：Planning `READY`；implementation `NOT_STARTED`。
+
+### A-01 Card / Draft
+
+- 依赖：FT-01 验收。
+- 范围：Launch Catalog card、local autosave、saving/saved/failed、登录 owner cloud draft、
+  kill/relaunch recovery、basic revision protection、idempotent save。
+- 不做：multi-device merge UX、sophisticated recovery-copy、collaboration-style conflict resolution。
+- 状态：`NOT_STARTED`。
+
+### A-02 Editor / Upload / Live Preview
+
+- 依赖：A-01。
+- 范围：Apple / Magazine 社交表单、模块组合、上传与重试、实时预览、完整状态。
+- 不做：Resume Editor、AI、Scrapbook、Anime Role、自由画布。
+- 状态：`NOT_STARTED`。
+
+### A-03 Publish / Moderation / Snapshot
+
+- 依赖：A-02。
+- 范围：发布校验、审核适配、失败定位、不可变 snapshot、旧公开版保护、幂等提交。
+- 不做：Post-launch 导出、码、AI、NFC。
+- 状态：`NOT_STARTED`。
+
+### A-04 Share / Anonymous View
+
+- 依赖：A-03。
+- 范围：微信原生分享 → deep link → 匿名公开名牌；公开 DTO 白名单；完整页面状态。
+- 不做：Mini Program Code、1:1 / 3:4 / 9:16 visual export matrix、访客追踪。
+- 状态：`NOT_STARTED`。
+
+### Alpha Validation
+
+- 依赖：A-04、Launch Catalog Alpha 回归。
+- 目标：验证真实用户是否愿意创建 → 发布 → 分享名牌。
+- 状态：`NOT_STARTED`。
+
+### First MVP Launch Social Loop
+
+- 顺序：Greeting → Return → Encounter → Contact Vault → Contact Exchange。
+- 强制规则：Collection 不属于该状态机；Greeting 必须确认递出的名牌；Return 为原子接受；
+  `RETURNED` 才创建 Encounter；Encounter 后且对方确认才展示选定联系方式。
+- 状态：`NOT_STARTED`。
+
+### First MVP Launch Release Gate
+
+- 范围：Safety、moderation、privacy、production CloudBase、iPhone / Android、release hygiene、
+  WeChat Review。
+- Node 20：`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`；不阻塞当前
+  development，但 production Gate 必须按当时批准的 Runtime/安全决策验收。
+- 状态：`NOT_STARTED`。
+
+### Post-launch
+
+- Collection（若 launch validation 不要求）；
+- Scrapbook、Anime Role、Professional、Project Portfolio、Resume Editor；
+- Mini Program Code；
+- 1:1 / 3:4 / 9:16 visual export matrix；
+- AI；
+- NFC。
+
+状态：`DEFERRED`。延期不删除六模板架构资产或回归测试。

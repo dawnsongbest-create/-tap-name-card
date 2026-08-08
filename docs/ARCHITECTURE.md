@@ -1,11 +1,16 @@
 # 「碰一下名牌」MVP 技术架构
 
-> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
+> 版本：RB-01 minimal sync v1.0｜日期：2026-08-08｜状态：Fast-track baseline applied
 >
 > 约束：M1.2 身份主链路和 M1.3 客户端响应安全/PageState 基础已通过验收；
 > M1.2 deferred validations 与 M1.3 deferred capabilities 不阻塞各自 closeout。
 >
 > 关联：[范围](./MVP_SCOPE.md)｜[数据](./DATA_MODEL.md)｜[接口](./API_SPEC.md)｜[测试](./TEST_PLAN.md)｜[决策](./DECISIONS.md)
+
+RB-01 只改变 delivery gating，不改变已验收架构：Launch Catalog 为 Apple Minimal / Magazine；
+Scrapbook、Anime Role、Professional、Project Portfolio 延期，但六模板 definition、registry、
+binding/shell 与 architecture regression tests 必须保留。首发分享只要求微信原生分享/deep
+link/匿名公开页；小程序码、视觉导出和可后置 Collection 不属于第一次上线架构阻断。
 
 ## 1. 架构目标与非目标
 
@@ -135,7 +140,8 @@ M2.1-A 的模板契约是单一小程序运行时消费者的 `LOCAL_DOMAIN`，�
   `TemplateRegistryEntry`、`RenderModel v1`、六模板所需最小 module contract 和运行时校验。
 - `TemplateDefinition != TemplateRegistryEntry != Preview implementation metadata`；
   `RenderModel != Persistence Model`。
-- 六个 MVP 模板以 app-bundled local versioned registry 注册：四 SOCIAL、两 RESUME。
+- 六个架构模板以 app-bundled local versioned registry 注册：四 SOCIAL、两 RESUME；产品
+  Launch Catalog 只展示 Apple Minimal / Magazine。
   generic registry 只负责 parsing、重复拒绝、fallback 合法性及确定性
   list/filter/get/resolve；production catalog 另行保证恰好六模板、批准的 ID/顺序、
   4+2 类别分布和 fallback。
@@ -176,9 +182,8 @@ raw unknown
   CSS-like metadata、image ratio 和 renderer-specific prepared state 不进入公共 contract。
 - 组件将 preparation 结果投影为 `ready | failure`；failure 必须清空
   `rendererKey=''`、`viewModel=null`，确保 `setData` merge 后没有 stale child。
-- `RendererKey` 到六个 child component 的绑定是受控静态 WXML branch；B1 child renderer
-  仅为最小 shell，用于验证 dispatch，不是 Apple/Magazine/Scrapbook/Anime/
-  Professional/Portfolio 正式视觉。
+- `RendererKey` 到六个 child component 的绑定是受控静态 WXML branch；Apple Minimal 与
+  Magazine 已完成正式视觉，其余四个 child 继续作为延期模板 shell 保留。
 - official fixture 固定为六模板 × `NORMAL | LONG_TEXT | MISSING_IMAGE |
 MINIMAL_OPTIONAL_CONTENT`，共 24 个。每个 fixture 必须先 `parseRenderModel` PASS，再
   capability PASS；negative capability fixtures 只用于测试，不进入 Prepared VM 或 child。
@@ -190,8 +195,8 @@ MINIMAL_OPTIONAL_CONTENT`，共 24 个。每个 fixture 必须先 `parseRenderMo
 - 微信运行时对部分 directory-style runtime imports 解析不稳定，B1 使用 explicit
   file/index imports；这是平台兼容修正，没有建立第二 parser、测试/运行时分叉或新 shared
   contract。
-- 编辑器、完整产品预览、公开页、Canvas 导出、模板选择持久化和正式六模板视觉属于后续
-  批次；B1 不宣称这些能力或视觉验收完成。
+- 编辑器、完整产品预览、公开页和模板选择持久化属于 Alpha 后续批次；Canvas 导出与四套
+  延期模板正式视觉属于 Post-launch。B1 历史 closeout 不宣称这些能力完成。
 
 ## 7. 身份、访问与权限
 
@@ -219,24 +224,28 @@ MINIMAL_OPTIONAL_CONTENT`，共 24 个。每个 fixture 必须先 `parseRenderMo
 ```
 
 - 编辑已发布名牌不修改公开快照。
-- 本地草稿记录 `baseRevision`、设备编辑时间与待同步操作；服务器记录单调 `draftRevision` 和旧版本恢复点。
-- 冲突以当前设备最近一次明确编辑为主，但服务端旧版本保留供恢复；冲突规则必须通过 Spike 验证。
+- Alpha 本地草稿记录最小 `baseRevision`、保存状态与待同步操作；服务器记录单调
+  `draftRevision`，提供 basic revision protection 与幂等保存。
+- multi-device merge UX、复杂 recovery-copy workflow 和 collaboration-style conflict
+  resolution 为后置增强，不阻塞 Alpha。
 - 隐藏/删除使公开入口立即不可用，不删除历史收藏/请求/相遇快照。
 
 ## 9. 图片上传与导出
 
 上传：本地预览 → 压缩 → 格式/尺寸校验 → 云存储临时对象 → 内容审核 → 绑定草稿 → 生成/使用不同尺寸。上传失败保留本地选择和重试状态；私密微信二维码与公开名牌图片使用不同存储前缀和访问策略。
 
-导出：客户端 Canvas 2D 优先，生成 1080×1440、1080×1920、1080×1080；仅用户确认后申请保存相册。必须测试中文、英文、Emoji、长文本、六模板、低内存、临时文件与 iOS/Android 差异。小程序码失败时允许导出无码版本。若 Canvas 真机兼容不可接受，再通过 ADR 评估服务端渲染，不先行建设。
+Post-launch 导出：客户端 Canvas 2D 优先，生成 1080×1440、1080×1920、1080×1080；
+能力进入实现 Gate 后测试中文、英文、Emoji、长文本、六模板、低内存、临时文件与
+iOS/Android 差异。小程序码失败时允许导出无码版本。
 
 ## 10. 平台适配层
 
 | 适配层   |   P | 接口语义                                  | 降级                                          |
 | -------- | --: | ----------------------------------------- | --------------------------------------------- |
 | 内容审核 |  P0 | 文本、图片、链接/二维码的提交与结果归一化 | 发布保持 `REVIEWING` 或明确失败；旧版继续公开 |
-| 小程序码 |  P0 | 输入已授权页面/场景参数，返回受控文件引用 | 提示重试；分享链接仍可用；允许无码导出        |
-| 微信分享 |  P0 | 固定名牌与当前名牌入口参数                | 复制/展示小程序码等明确兜底，具体能力待验证   |
-| 相册保存 |  P0 | 保存授权、拒绝、重试                      | 展示授权说明或仅预览                          |
+| 小程序码 | Post-launch | 输入已授权页面/场景参数，返回受控文件引用 | 提示重试；分享链接仍可用；允许无码导出 |
+| 微信分享 | Alpha | 固定名牌与当前名牌 deep link 参数        | 明确重试/复制入口提示；具体能力待真机验证     |
+| 相册保存 | Post-launch | 保存授权、拒绝、重试                 | 展示授权说明或仅预览                     |
 | AI       |  P1 | 最小上下文、结构化候选、安全状态          | 保留原文，人工编辑；P0 关闭                   |
 | NFC      |  P2 | 随机动态入口解析                          | QR 兜底；P0 不实现                            |
 

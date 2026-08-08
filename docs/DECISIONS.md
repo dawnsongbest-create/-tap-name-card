@@ -1,6 +1,6 @@
 # 「碰一下名牌」架构与产品决策记录（ADR）
 
-> 版本：M2.1-B1 final closeout v1.0｜日期：2026-07-30｜状态：M2.1 `IN_PROGRESS`
+> 版本：RB-01 Fast-track Rebaseline v1.0｜日期：2026-08-08｜状态：RB-01 `READY_FOR_REVIEW`
 >
 > 状态含义：`ACCEPTED` 为 PRD 已确定；`PROPOSED` 为工程建议待 Tech Lead 确认；`NEEDS_VALIDATION` 为平台/产品细节待验证。
 
@@ -616,3 +616,50 @@ EMPTY_REQUIRED_MODULE`。
   WeChat DevTools Manual Gate 和 Post-DevTools Re-Review 均为 `PASS`；native included
   package 139,796 bytes、binary media 0。CloudBase/identity impact 为 `NONE`，CloudBase
   manual validation 为 `N/A`。
+
+## ADR-036 采用双模板 Fast-track MVP 交付基线
+
+- 状态：`ACCEPTED`
+- 日期：2026-08-08
+- 决策人：产品负责人、产品 Review
+- 背景：MVP Fast-track Plan 已完成用户/产品 Review。Git `main` 的
+  `af5369d5065bf4a224f7b8a0daa882b1b0eb03ce` 已交付 Apple Minimal 与 Magazine，
+  但权威文档仍把原 B2 四套 Social、B3 两套 Resume、码/导出、Collection 和完整 Social
+  Loop 视为同一首发批次，且下一 Gate 仍指向已经完成的 B1 closeout。
+- Launch Catalog：
+  - `T-SOCIAL-01` Apple Minimal：`DELIVERED`；
+  - `T-SOCIAL-02` Magazine：`DELIVERED`。
+- Post-MVP delivery catalog：
+  - `T-SOCIAL-03` Scrapbook；
+  - `T-SOCIAL-04` Anime Role；
+  - `T-RESUME-01` Professional；
+  - `T-RESUME-02` Project Portfolio。
+- 架构保留：延期不等于删除。六个稳定 template ID、六份 TemplateDefinition、六条
+  registry entry、六个 renderer binding/shell 和 architecture regression tests 必须继续
+  保留；production registry 不得缩减为两模板。
+- Gate：
+  - ALPHA：Gallery → Preview → Select → Editor → Draft → Publish → Share → Anonymous
+    View，验证用户是否愿意创建、发布、分享名牌；
+  - FIRST MVP LAUNCH：Alpha + Greeting → Return → Encounter → Contact Exchange，并完成
+    safety、moderation、privacy、production CloudBase、iPhone/Android、release hygiene 和
+    WeChat Review。
+- Draft：Alpha 只要求 local autosave、明确 saving/saved/failed、登录 owner 云草稿、
+  kill/relaunch recovery、basic revision protection 与 idempotent save。multi-device merge
+  UX、sophisticated recovery-copy、collaboration-style conflict resolution 后置。
+- Social：Greeting → Return → Encounter → Contact Exchange 优先。Collection 保持 silent、
+  one-way、private、independent from Greeting；可排在 First MVP 后段或 Post-launch，永远不
+  与 Greeting 合并。
+- Sharing：Alpha / First MVP Launch 只要求 WeChat native share → deep link → anonymous
+  public card。Mini Program Code 与 1:1 / 3:4 / 9:16 visual export matrix 为 Post-launch。
+- 当前状态：M0、M1.1—M1.4、M2.1-A、M2.1-B1、Apple Minimal、Magazine 已完成；
+  Original Social B2=`PARTIALLY_DELIVERED / REBASELINED`；Original B3 Resume、Scrapbook、
+  Anime Role=`POST_MVP_DEFERRED`。
+- 下一 Gate：RB-01 Review 通过后仅进入 `FT-01 M2.1-C FAST TRACK PLANNING`；RB-01 不
+  授予 FT-01 implementation 权限。
+- Node 20：`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`。该限制不阻塞
+  RB-01、FT-01 或当前 MVP development；RB-01 不重新处理 Node 20。production 的目标
+  Runtime 与安全门禁继续受 ADR-031/032 及届时正式复审约束。
+- 历史保护：不重写 M2.1-A/B1 closeout；Apple checkpoint `d4f184b` 与 Magazine checkpoint
+  `af5369d` 保留。
+- 后果：旧文档中的 `P0/P1/P2` 与 M2—M5 排期仅作为完整需求库存和历史映射；与本 ADR
+  冲突时，以 PRD 0.5 节和 Fast-track Gate 为准。
