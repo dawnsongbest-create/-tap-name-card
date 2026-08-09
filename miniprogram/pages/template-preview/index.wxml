@@ -1,0 +1,24 @@
+<view wx:if="{{previewState === 'READY'}}" class="template-preview">
+  <view class="template-preview__renderer">
+    <card-renderer model="{{previewModel}}"></card-renderer>
+  </view>
+
+  <view class="template-preview__action-spacer"></view>
+  <view class="template-preview__action-bar">
+    <view wx:if="{{selectionConfirmed}}" class="template-preview__confirmation">
+      <view class="template-preview__confirmation-title">{{selectionTitle}}</view>
+      <view class="template-preview__confirmation-message">下一步将进入编辑器</view>
+    </view>
+    <button wx:else class="template-preview__select-action" bindtap="onSelectTemplate">
+      使用这个模板
+    </button>
+  </view>
+</view>
+
+<view wx:else class="template-preview template-preview--state">
+  <page-state
+    kind="not-found"
+    title="{{stateTitle}}"
+    message="{{stateMessage}}"
+  ></page-state>
+</view>

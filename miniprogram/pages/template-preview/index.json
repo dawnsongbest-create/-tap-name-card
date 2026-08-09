@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "模板预览",
+  "usingComponents": {
+    "card-renderer": "/components/card-renderer/index",
+    "page-state": "/components/page-state/index"
+  }
+}

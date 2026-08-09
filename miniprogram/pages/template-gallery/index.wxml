@@ -1,0 +1,34 @@
+<view wx:if="{{catalogState === 'READY'}}" class="template-gallery">
+  <view class="template-gallery__header">
+    <view class="template-gallery__title">选择你的名牌</view>
+    <view class="template-gallery__description">先看看风格，再开始制作</view>
+  </view>
+
+  <view class="template-gallery__list">
+    <view wx:for="{{entries}}" wx:key="templateId" class="template-gallery__item">
+      <view class="template-gallery__preview-window" aria-label="{{item.display.name}} 模板预览">
+        <card-renderer model="{{item.previewModel}}"></card-renderer>
+      </view>
+      <view class="template-gallery__meta">
+        <view class="template-gallery__name">{{item.display.name}}</view>
+        <view class="template-gallery__style">{{item.display.description}}</view>
+        <button
+          class="template-gallery__preview-action"
+          data-template-id="{{item.templateId}}"
+          data-template-version="{{item.templateVersion}}"
+          bindtap="onPreviewTemplate"
+        >
+          查看完整预览
+        </button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view wx:else class="template-gallery template-gallery--state">
+  <page-state
+    kind="empty"
+    title="暂时没有可用模板"
+    message="请稍后再打开看看。"
+  ></page-state>
+</view>

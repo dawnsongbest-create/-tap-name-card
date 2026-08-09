@@ -1,7 +1,11 @@
 {
-  "pages": ["pages/foundation/index"],
+  "pages": [
+    "pages/template-gallery/index",
+    "pages/template-preview/index",
+    "pages/foundation/index"
+  ],
   "window": {
-    "navigationBarTitleText": "工程初始化",
+    "navigationBarTitleText": "碰一下名牌",
     "navigationBarBackgroundColor": "#f5f5f7",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f5f5f7",

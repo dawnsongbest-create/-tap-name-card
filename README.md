@@ -3,10 +3,11 @@
 「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
 
 当前状态：M0、M1.1—M1.4、M2.1-A Template Domain / Schema / Registry、M2.1-B1
-Renderer Foundation、Apple Minimal 与 Magazine 均已完成。Original Social B2 为
-`PARTIALLY_DELIVERED / REBASELINED`；Scrapbook、Anime Role 与 Original B3 Resume 为
-`POST_MVP_DEFERRED`。当前 Gate 是 RB-01 Documentation Rebaseline；Review 通过后的下一
-Gate 仅为 `FT-01 M2.1-C FAST TRACK PLANNING`，尚未开始 FT-01 implementation。
+Renderer Foundation、Apple Minimal、Magazine 与 FT-01 Gallery / Preview / Select 实现均已
+完成。Original Social B2 为 `PARTIALLY_DELIVERED / REBASELINED`；Scrapbook、Anime Role 与
+Original B3 Resume 为 `POST_MVP_DEFERRED`。FT-01 用户视觉 Review 已
+`APPROVED_FOR_FIRST_MVP`，当前状态为 `READY_FOR_INDEPENDENT_REVIEW`；Independent Review、
+Commit 与 Push 尚未完成，A-01 implementation 尚未授权。
 
 M2.1-A 在 `miniprogram/templates/` 内建立本地模板领域：`TemplateDefinition v1`、
 `TemplateRegistryEntry`、`RenderModel v1`、六个稳定模板定义、运行时领域校验，以及
@@ -16,6 +17,11 @@ ingress、typed preparation/capability boundary、精确静态 renderer binding�
 `PreparedCardViewModel`、24 个确定性 fixtures、development-only Renderer Lab，以及六个
 最小 child renderer shells。此后 Apple Minimal 与 Magazine 已分别完成正式视觉交付；
 其余四个 shell 继续作为延期模板的架构 binding 保留。B1 CloudBase Impact 为 `NONE`。
+
+FT-01 增加本地确定性的 Launch Catalog 与产品预览模型，并把 Gallery 设为冷启动首页。产品
+UI 仅投影 Apple Minimal / Magazine，Gallery 只提供“查看完整预览”，Preview 使用现有
+`CardRenderer` 并以固定底部操作区确认选择。选择交接严格为 `templateId/templateVersion`；
+FT-01 不登录、不建号、不建 Card、不持久化，也不调用网络或 CloudBase。
 
 ## Fast-track MVP 基线
 
@@ -33,8 +39,8 @@ ingress、typed preparation/capability boundary、精确静态 renderer binding�
   后置。
 - 架构：六个稳定 template ID、六份 TemplateDefinition、六条 registry entry、六个 renderer
   binding/shell 与 architecture regression tests 全部保留，底层 registry 不缩为两模板。
-- Node 20：`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`，不阻塞 RB-01、
-  FT-01 或当前 MVP development；RB-01 不重新处理 Node 20。
+- Node 20：`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`，不阻塞 FT-01、
+  A-01 planning 或当前 MVP development；FT-01 未重新处理 Node 20。
 
 M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
 CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
@@ -103,14 +109,19 @@ development 三个现有函数实际运行 `Nodejs16.13`，这是 ADR-032 限定
 2. 项目目录选择本仓库根目录。
 3. 确认小程序目录识别为 `miniprogram/`。
 4. 确认开发者工具已关联 development 环境。
-5. 编译后应看到工程身份基础页。
-6. 页面应展示 development 已配置提示、七种基础 PageState、安全非法状态 fallback、
-   两种可重试状态、手动身份探针和 development-only Renderer Lab。
+5. 编译后应看到“选择你的名牌”Gallery。
+6. Gallery 应只展示 Apple Minimal / Magazine，并且每张卡只有“查看完整预览”产品操作；
+   Foundation 工程页仍可通过 `pages/foundation/index` 直接打开。
 
 M2.1-B1 已在 WeChat DevTools Stable `v2.01.2510290`、基础库 `3.17.0` 完成真实本地
 compile、`CardRenderer` mount、六 shell dispatch、24 fixture/scenario matrix、
 ready/failure 双向切换、stale-state cleanup 和 Lab 本地切换验证。该验证不包含 Preview、
 Upload、正式六模板视觉或产品路由。
+
+FT-01 已在 WeChat DevTools `v2.02.2607171`、基础库 `3.17.0` 完成冷启动、Gallery、
+Apple/Magazine Preview / Select、非法/延期/版本路由、滚动、safe-area 与 Foundation 直达
+回归验证；用户已接受当前 First MVP 视觉。精确 iPhone / Android device matrix 继续属于
+Launch Hardening，不再阻塞 FT-01 Independent Review。
 
 `project.config.json`、原生 TypeScript、页面注册与两套根目录识别已在 M1.1/M1.2-A
 微信开发者工具人工验收中通过。若开发者工具后续调整或移除字段，应重新验证并记录到
@@ -128,8 +139,8 @@ npm.cmd run cloudfunctions:check
 npm.cmd run cloudfunctions:check:isolated
 ```
 
-这些命令必须真实执行。命令存在不代表检查通过。当前 M2.1-B1 closeout 基线为
-31 个测试文件、244 项测试。
+这些命令必须真实执行。命令存在不代表检查通过。当前 FT-01 Review 基线为 36 个测试文件、
+294 项测试。
 `cloudfunctions:check:isolated` 会在系统临时目录按各函数锁文件安装生产依赖、检查完整
 依赖树并加载入口；它不连接或部署 CloudBase。
 

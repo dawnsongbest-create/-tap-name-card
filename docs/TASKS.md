@@ -1,13 +1,13 @@
 # 「碰一下名牌」M0—M5 可执行任务树
 
-> 版本：RB-01 Fast-track Rebaseline v1.0｜日期：2026-08-08｜状态：RB-01 `READY_FOR_REVIEW`
+> 版本：FT-01 user approval sync v1.1｜日期：2026-08-09｜状态：FT-01 `IN_REVIEW / READY_FOR_INDEPENDENT_REVIEW`
 >
 > 合法任务状态：`NOT_STARTED | READY | IN_PROGRESS | BLOCKED | IN_REVIEW | DONE | DEFERRED | REBASELINED`
 >
 > 当前规则：M0、M1.1—M1.4、M2.1-A、M2.1-B1、Apple Minimal、Magazine 均已完成；
 > Original Social B2 为 `PARTIALLY_DELIVERED / REBASELINED`；Scrapbook、Anime Role 与
-> Original B3 Resume 为 `POST_MVP_DEFERRED`。下一 implementation gate 是 FT-01，但
-> RB-01 只把 FT-01 Planning 标记为 `READY`，不授予 implementation 权限。
+> Original B3 Resume 为 `POST_MVP_DEFERRED`。FT-01 implementation 已完成，用户视觉 Review
+> 已 `APPROVED_FOR_FIRST_MVP`，当前等待 Independent Review；A-01 保持 `NOT_STARTED`。
 > 关联：[范围](./MVP_SCOPE.md)｜[架构](./ARCHITECTURE.md)｜[测试](./TEST_PLAN.md)
 
 ## 1. 通用 DoR / DoD
@@ -158,14 +158,14 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
   Anime Role 为 `POST_MVP_DEFERRED`。因此原工作包记录为
   `PARTIALLY_DELIVERED / REBASELINED`。
 - Original M2.1-B3：Professional、Project Portfolio 为 `POST_MVP_DEFERRED`。
-- M2.1-C：重排为 FT-01 M2.1-C Fast Track；Planning `READY`，implementation
-  `NOT_STARTED`。
+- M2.1-C：重排为 FT-01 M2.1-C Fast Track；implementation `DONE`，用户视觉 Review
+  `APPROVED_FOR_FIRST_MVP`，当前 `READY_FOR_INDEPENDENT_REVIEW`。
 - Cloud/API：当前模板事实来源是 app-bundled local versioned production registry；
   `templateList`/`templateGet` Cloud Functions `DEFERRED`，不得同时维护本地和云端两套
   当前 catalog 事实来源。
 - 不做：Card persistence、Draft、Snapshot、Editor、Upload、Publish、Share、Collection、
   Greeting、Encounter、Contact exchange、Analytics、AI、NFC、Dynamic template platform。
-- 下一门禁：RB-01 Review 后进入 FT-01 Planning；本记录不授权 FT-01 implementation。
+- 下一门禁：FT-01 Independent Review；本记录不授权 A-01 implementation。
 
 ### M2-02 名牌 CRUD 与草稿
 
@@ -346,20 +346,32 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
   B3 与四延期模板状态正确；两个 Gate、Draft/Social/Sharing 简化和下一 Gate 一致；历史
   closeout 未重写；Apple `d4f184b` / Magazine `af5369d` checkpoint 保留；
   `git diff --check` 与 `git status --short` 已执行。
-- 状态：`READY_FOR_REVIEW`。
+- 状态：`DONE`；最终提交 `167528a`，Independent Re-review `PASS / NO BLOCKING FINDINGS`。
 
 ### FT-01 M2.1-C Fast Track — Gallery / Preview / Select
 
-- 依赖：RB-01 Review 通过并获得独立 planning approval。
-- 范围：Launch Catalog Gallery、Template Preview、Select、routing、browse/select/back/switch UX。
+- 依赖：RB-01 Review、FT-01 Planning Review 与 implementation approval 均已通过。
+- 范围：Launch Catalog Gallery、Template Preview、Select 与精确 routing；Gallery 为冷启动
+  首页，Preview 使用原生返回，不提供模板左右切换。
 - 架构边界：产品 UI 只开放 Apple Minimal / Magazine；六 TemplateDefinitions、六 registry
   entries、六 renderer bindings/shells 与 architecture regression tests 全部保留。
+- 交接边界：只交接 `templateId/templateVersion`，category 由精确 registry 解析；产品 projection
+  不包含 `editorLevel`。
+- 匿名边界：不登录、不建号、不建 Card、不写 storage、不发网络/CloudBase 请求。
+- 失败状态：任意 ID、延期 ID、版本不匹配安全映射为 not-found；产品预览模型缺失映射为
+  本地 render failure；`CardRenderer` 继续负责真实 renderer failure fallback。
 - 不做：Editor、Draft、Upload、Publish、Share、Collection、Social Loop、四延期模板正式视觉。
-- 状态：Planning `READY`；implementation `NOT_STARTED`。
+- 自动验证：36 个测试文件、294 项测试；`shared:check`、format、lint、typecheck、test 与
+  `cloudfunctions:check` 全部通过。
+- 人工验证：DevTools `v2.02.2607171` / 基础库 `3.17.0` 已完成 Gallery、Apple/Magazine
+  Preview / Select、异常路由、滚动、safe-area 与 Foundation 回归；用户视觉 Review 已
+  `APPROVED_FOR_FIRST_MVP`。精确 iPhone / Android device matrix 属于 Launch Hardening。
+- 状态：implementation `DONE`；用户视觉 `USER_VISUAL_APPROVED`；Gate
+  `IN_REVIEW / READY_FOR_INDEPENDENT_REVIEW`。Independent Review、Commit / Push 尚未完成。
 
 ### A-01 Card / Draft
 
-- 依赖：FT-01 验收。
+- 依赖：FT-01 用户验收通过。
 - 范围：Launch Catalog card、local autosave、saving/saved/failed、登录 owner cloud draft、
   kill/relaunch recovery、basic revision protection、idempotent save。
 - 不做：multi-device merge UX、sophisticated recovery-copy、collaboration-style conflict resolution。
@@ -413,6 +425,7 @@ DoR：范围、依赖、数据/状态、页面/API 验收、平台验证或适�
 - Scrapbook、Anime Role、Professional、Project Portfolio、Resume Editor；
 - Mini Program Code；
 - 1:1 / 3:4 / 9:16 visual export matrix；
+- 产品探索：单屏完整 Cover + optional extension pages（非当前 architecture commitment；当前继续使用单页 Card / RenderModel）；
 - AI；
 - NFC。
 

@@ -1,7 +1,7 @@
 # 「碰一下名牌」MVP Development Plan
 
-> **文档版本：RB-01 Fast-track Rebaseline v1.0**
-> **日期：2026-08-08**
+> **文档版本：FT-01 user approval sync v1.1**
+> **日期：2026-08-09**
 > **状态：面向 Codex 的正式开发执行计划**  
 > **唯一产品事实来源：`docs/PRD.md`**  
 > **适用阶段：RB-01—First MVP Launch / Post-launch**
@@ -444,8 +444,8 @@ Post-launch，不作为 First MVP Launch 真机完成条件。
 | M2.1-A / B1 | `DONE` | 六模板 domain/registry 与 renderer foundation；历史 closeout 保留 |
 | Original Social B2 | `PARTIALLY_DELIVERED / REBASELINED` | Apple Minimal、Magazine 已交付；Scrapbook、Anime Role 延期 |
 | Original B3 Resume | `POST_MVP_DEFERRED` | Professional、Project Portfolio 与 Resume Editor 延期 |
-| RB-01 | `READY_FOR_REVIEW` | Documentation Rebaseline |
-| FT-01 M2.1-C Fast Track | `READY_FOR_PLANNING` | Gallery / Preview / Select |
+| RB-01 | `DONE` | Documentation Rebaseline；commit `167528a` |
+| FT-01 M2.1-C Fast Track | `IN_REVIEW / READY_FOR_INDEPENDENT_REVIEW` | 实现完成；用户视觉 `APPROVED_FOR_FIRST_MVP`；Independent Review 待完成 |
 | A-01 | `NOT_STARTED` | Card / Draft |
 | A-02 | `NOT_STARTED` | Editor / Upload / Live Preview |
 | A-03 | `NOT_STARTED` | Publish / Moderation / Snapshot |
@@ -611,8 +611,9 @@ HMAC Secret，并重新验证目标 Runtime、SDK advisory、函数调用权限�
 
 总状态：`IN_PROGRESS`。M2.1-A `DONE`；M2.1-B1 `DONE`；Original Social B2
 `PARTIALLY_DELIVERED / REBASELINED`；Original B3 Resume `POST_MVP_DEFERRED`；
-M2.1-C 已重排为 FT-01 M2.1-C Fast Track，当前 `READY_FOR_PLANNING`、implementation
-`NOT_STARTED`。
+M2.1-C 已重排为 FT-01 M2.1-C Fast Track，implementation `DONE`，当前 Gate 为
+`IN_REVIEW / READY_FOR_INDEPENDENT_REVIEW`；用户视觉 Review 已
+`APPROVED_FOR_FIRST_MVP`，Independent Review 与 Commit / Push 尚未完成。
 
 M2.1-A 已完成 Template Domain / Schema / Registry：
 
@@ -650,9 +651,22 @@ prepareCardRender` trust chain；
 
 Original Social B2 已交付 Apple Minimal 与 Magazine 正式视觉；Scrapbook、Anime Role
 改为 `POST_MVP_DEFERRED`。Original B3 的 Professional、Project Portfolio 正式视觉与
-Resume Editor 同样延期。六模板 renderer shell/binding 与架构回归不得删除。FT-01 将覆盖
-Gallery、Template Preview、Select、routing 和 browse/select/back/switch UX；RB-01 不授予
-其 implementation 权限。
+Resume Editor 同样延期。六模板 renderer shell/binding 与架构回归不得删除。
+
+FT-01 已完成以下交付：
+
+- 冷启动 Gallery 只投影 Apple Minimal / Magazine，并用真实 `CardRenderer` 展示本地确定性
+  预览；Gallery 不直接 Select；
+- Preview 只接受精确 `templateId/templateVersion`，完整渲染后由固定底部 CTA 确认选择；
+- selection handoff 严格只有 `templateId/templateVersion`，category 由 registry 解析，产品
+  projection 不暴露 `editorLevel`；
+- 任意 ID、延期模板和版本不匹配使用安全 not-found；模型缺失使用本地 render failure；
+- 全流程匿名且无 storage、network、CloudBase、account 或 Card mutation；
+- 六模板 domain/registry/binding/shell 与 Foundation 路由保持不变；
+- 36 个测试文件、294 项测试及全部自动门禁通过；DevTools `v2.02.2607171` / 基础库
+  `3.17.0` 已完成 Gallery、Apple/Magazine Preview / Select、异常路由、滚动、safe-area 与
+  Foundation 回归；用户视觉已 `APPROVED_FOR_FIRST_MVP`。精确 iPhone / Android device matrix
+  继续属于 Launch Hardening，不阻塞 FT-01 Independent Review。
 
 ## A-01：Card / Draft
 
@@ -879,7 +893,8 @@ M0、M1.1—M1.4、M2.1-A、M2.1-B1、Apple Minimal 和 Magazine 均已完成。
 Social B2 为 `PARTIALLY_DELIVERED / REBASELINED`；Original B3 Resume、Scrapbook 和
 Anime Role 为 `POST_MVP_DEFERRED`。
 
-当前 Gate 仅为 RB-01 Documentation Rebaseline。RB-01 Review 通过后的下一 Gate 是
-`FT-01 M2.1-C FAST TRACK PLANNING`，范围仅为 Gallery / Preview / Select 规划；不得从
-本文档自动进入 implementation。A-01—A-04、Alpha Validation、First MVP Launch 和
-Post-launch 均须各自进入明确 Gate。
+当前 Gate 是 `FT-01 M2.1-C FAST TRACK INDEPENDENT REVIEW`。implementation 已完成，自动
+门禁与 DevTools runtime validation 已通过，用户视觉 Review 已
+`APPROVED_FOR_FIRST_MVP`；Independent Review、Commit 与 Push 尚未完成。FT-01 closeout 后的
+推荐下一 Gate 为 `A-01 CARD / DRAFT PLANNING`，但本文档不授权 A-01 implementation；
+A-02—A-04、Alpha Validation、First MVP Launch 和 Post-launch 仍须各自获得明确授权。

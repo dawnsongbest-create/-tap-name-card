@@ -1,10 +1,10 @@
 # 「碰一下名牌」页面与交互规格
 
-> 版本：RB-01 minimal sync v1.0｜日期：2026-08-08｜状态：Fast-track baseline applied
+> 版本：FT-01 user approval sync v1.1｜日期：2026-08-09｜状态：FT-01 `IN_REVIEW / USER_VISUAL_APPROVED / READY_FOR_INDEPENDENT_REVIEW`
 > 页面范围：P01—P26；P08 为 P1，P26 为 P2，P0 中均隐藏。  
 > 关联：[范围](./MVP_SCOPE.md)｜[API](./API_SPEC.md)｜[测试](./TEST_PLAN.md)
 
-RB-01 Gate 覆盖：FT-01 的 P04/P05 只展示 Apple Minimal / Magazine，底层六模板 registry
+FT-01 实现覆盖：P04/P05 只展示 Apple Minimal / Magazine，底层六模板 registry
 保持不变；P06/P09/P10/P11 进入 Alpha；P12—P17 进入 First MVP Launch；P07 Resume、P18
 视觉导出、P20 Collection（若 launch validation 不要求）、P08 AI、P26 NFC 后置。历史页面
 编号和状态规格继续保留。
@@ -69,20 +69,26 @@ timeout、结果确认、P25 登录引导和领域状态仍由首次真实消费
 
 ### P04 模板选择（FT-01 / Alpha）
 
-- 目的/登录/来源：从 Launch Catalog 选择 Apple Minimal / Magazine；登录；P03 或编辑器更换模板。
-- 结构/操作：大卡/双列预览、名称、风格、L1/L2、多图/动画标识；点卡进 P05；使用/更换为主操作。
-- 数据/事件/跳转：`templateList`；`template_list_viewed/template_selected`；P05 或返回编辑器兼容确认。
-- 状态：加载骨架；空=配置异常并提供重试；网络失败可用安全内置模板；无权限=账号受限；不存在=模板下线返回列表；审核/隐藏不适用；频率不适用。
-- 无障碍/验收：预览图有说明，标识带文本；首发只见两个 Launch Catalog 模板；延期模板
-  不可见但其底层 registry/binding 继续通过架构回归。
+- 目的/登录/来源：匿名浏览 Apple Minimal / Magazine Launch Catalog；不登录；冷启动首页。
+- 结构/操作：纵向两张大卡，每张使用真实 `CardRenderer` 的裁切预览、名称和风格描述；唯一
+  操作为“查看完整预览”，Gallery 不提供 Select。
+- 数据/事件/跳转：本地同步 catalog 对精确 registry entry 做产品 projection；不调用
+  `templateList`；只以 `templateId/templateVersion` 导航 P05。
+- 状态：本地 catalog ready；配置异常显示安全 empty state；无网络、账号、审核或频率状态。
+- 无障碍/验收：预览窗口有模板说明；首发只见两个模板且无 `editorLevel`；延期模板不可见，
+  但其底层 registry/binding 继续通过架构回归。
 
 ### P05 模板全屏预览（FT-01 / Alpha）
 
-- 目的/登录/来源：不填资料先完整看模板；登录；P04。
-- 结构/操作：真实手机比例、滚动、深浅示例、模块支持列表；主按钮“使用这个模板”。
-- 数据/事件/跳转：`templateGet`；选用后 `cardCreate` 或回原编辑器执行兼容切换；到 P06/P07。
-- 状态：加载骨架；网络失败/不存在返回模板列表；无权限/受限禁止创建；空/审核/隐藏不适用；提交频率/重复由 cardCreate 处理。
-- 无障碍/验收：滚动焦点可达、动画可关；不要求填资料，类型不匹配拒绝，创建超时先查 P19。
+- 目的/登录/来源：匿名、不填资料先完整看模板；不登录；P04 或受测 deep route。
+- 结构/操作：真实 `CardRenderer` 全量预览并允许页面滚动；底部 safe-area 操作区固定显示
+  “使用这个模板”；使用原生返回，不提供左右模板切换。
+- 数据/事件/跳转：只从本地 catalog 精确解析 `templateId/templateVersion`；确认后仅形成同名
+  两字段 handoff，本 Sprint 不调用 `templateGet`、`cardCreate`，也不进入编辑器。
+- 状态：任意 ID、延期 ID、版本不匹配统一显示安全 not-found，且不回显原始参数；本地产品
+  模型缺失显示 render failure；真实 renderer 失败由既有 `CardRenderer` fallback 承担。
+- 无障碍/验收：滚动焦点可达；不要求资料或账号；确认选择不创建 Card、不持久化、不发起
+  网络或 CloudBase 请求。
 
 ### P06 社交名牌编辑器（Alpha）
 
