@@ -1,207 +1,306 @@
-# 碰一下名牌
+# 碰卡 —— 碰一下名牌
 
-「碰一下名牌」是一个微信原生小程序 MVP，帮助用户创建高度视觉化的个人名牌，并在真实社交场景中完成自我介绍与破冰。
+> **用一张更有设计感的数字名牌，让介绍自己和认识别人变得更轻松。**
 
-当前状态：M0、M1.1—M1.4、M2.1-A Template Domain / Schema / Registry、M2.1-B1
-Renderer Foundation、Apple Minimal、Magazine 与 FT-01 Gallery / Preview / Select 实现均已
-完成。Original Social B2 为 `PARTIALLY_DELIVERED / REBASELINED`；Scrapbook、Anime Role 与
-Original B3 Resume 为 `POST_MVP_DEFERRED`。FT-01 用户视觉 Review 已
-`APPROVED_FOR_FIRST_MVP`，当前状态为 `READY_FOR_INDEPENDENT_REVIEW`；Independent Review、
-Commit 与 Push 尚未完成，A-01 implementation 尚未授权。
+「碰一下名牌」是一款我从 0 到 1 设计并持续 Coding 的自我介绍与线下社交破冰微信小程序。
+用户可以创建代表自己不同侧面的数字名牌，用更有设计感的卡片通过碰一碰来展示姓名、性格、兴趣、最近状态与个人经历，并在聚会、兴趣活动等线下场景中主动分享给他人，让对方先了解自己、找到共同话题，再决定是否进一步认识。
 
-M2.1-A 在 `miniprogram/templates/` 内建立本地模板领域：`TemplateDefinition v1`、
-`TemplateRegistryEntry`、`RenderModel v1`、六个稳定模板定义、运行时领域校验，以及
-generic registry / production catalog 分离的本地同步 registry。模板契约没有进入根
-`shared/` 或生成镜像。M2.1-B1 在该领域上建立单一公共 `CardRenderer`、唯一 raw parsing
-ingress、typed preparation/capability boundary、精确静态 renderer binding、renderer-neutral
-`PreparedCardViewModel`、24 个确定性 fixtures、development-only Renderer Lab，以及六个
-最小 child renderer shells。此后 Apple Minimal 与 Magazine 已分别完成正式视觉交付；
-其余四个 shell 继续作为延期模板的架构 binding 保留。B1 CloudBase Impact 为 `NONE`。
+---
 
-FT-01 增加本地确定性的 Launch Catalog 与产品预览模型，并把 Gallery 设为冷启动首页。产品
-UI 仅投影 Apple Minimal / Magazine，Gallery 只提供“查看完整预览”，Preview 使用现有
-`CardRenderer` 并以固定底部操作区确认选择。选择交接严格为 `templateId/templateVersion`；
-FT-01 不登录、不建号、不建 Card、不持久化，也不调用网络或 CloudBase。
+## Preview
 
-## Fast-track MVP 基线
+> 当前首发版本包含 Apple Minimal 与 Magazine 两套视觉模板。
 
-- Launch Catalog：`T-SOCIAL-01` Apple Minimal、`T-SOCIAL-02` Magazine。
-- ALPHA：Gallery → Preview → Select → Editor → Draft → Publish → Share → Anonymous View。
-- FIRST MVP LAUNCH：Alpha + Greeting → Return → Encounter → Contact Exchange，再完成
-  safety、moderation、privacy、production CloudBase、iPhone/Android、release hygiene 与
-  WeChat Review。
-- 首发分享：微信原生分享 → deep link → 匿名公开名牌。Mini Program Code 与
-  1:1 / 3:4 / 9:16 visual export matrix 为 Post-launch。
-- Collection：继续 silent / one-way / private，并与 Greeting 独立；可排在 First MVP 后段或
-  Post-launch。
-- Draft：Alpha 采用 local autosave、明确 saving/saved/failed、登录 owner 云草稿、
-  kill/relaunch recovery、basic revision protection 与 idempotent save；复杂多设备冲突 UX
-  后置。
-- 架构：六个稳定 template ID、六份 TemplateDefinition、六条 registry entry、六个 renderer
-  binding/shell 与 architecture regression tests 全部保留，底层 registry 不缩为两模板。
-- Node 20：`CLOUDFUNCTION_ISOLATED_GATE = KNOWN_ENVIRONMENT_LIMITATION`，不阻塞 FT-01、
-  A-01 planning 或当前 MVP development；FT-01 未重新处理 Node 20。
+<img width="1560" height="591" alt="image" src="https://github.com/user-attachments/assets/9afda1a9-28ad-477e-9fab-1c64084894b3" />
 
-M1.2 已完成 CloudBase development 身份基础：共享身份契约、服务端 HMAC 身份键、
-CloudBase Repository、`wx-server-sdk.getWXContext()` 可信微信上下文适配、三个独立云函数、
-客户端 `wx.cloud` 初始化/调用、本地自动测试和真实 development 验收均已通过。development
-已部署 `authEnsureUser`、`accountGetMe`、`accountAcceptPolicies`，并创建客户端不可读写的
-`users` 与 `identity_mappings`。
+---
 
-M1.3 已建立客户端远端响应运行时安全边界和最小 PageState 基础：运行时响应校验、
-三个身份 endpoint 的 success DTO parser、canonical `ErrorCode` 运行时边界、安全
-`CloudFunctionResult` normalization、七种 canonical PageState，以及只表达用户意图的
-retry 事件。M1.3 closeout 基线为 23 个测试文件、161 项测试。M1.3 没有新增 CloudBase
-部署、集合或服务端函数；在 M1.3 closeout 时，名牌、模板、收藏、认识请求、相遇、
-联系方式、AI 和 NFC 尚未实现。
+## 为什么做这个产品？
 
-M1.4 作为 M2 Entry Readiness / Foundation Acceptance Sprint 完成了当前 `main` HEAD
-回归、development CloudBase 只读漂移检查、微信开发者工具聚焦回归、M1 Foundation
-Acceptance 和 M2 Entry Gate 关闭。本 Sprint 没有产品代码修改或 CloudBase mutation。
-staging 不是未来 M2.1 implementation approval 的前置条件，但必须在 external testing
-前建立并通过独立安全门禁。
+我观察到，很多人在第一次和别人见面时，很难在几十秒内组织好语言。
 
-## 环境要求
+真正想介绍的兴趣、经历和生活状态没有机会表达，传统自我介绍最后往往变成：
 
-- Windows 10/11
-- Node.js 24.x（本仓库 `.nvmrc` 固定为 24.14.0）
-- npm 11.x
-- 微信开发者工具（用于导入与编译验证）
-- Git
+> 姓名 → 学校 → 职业 → 专业 → 结束
 
-在 PowerShell 执行策略阻止 `npm.ps1` 时，请使用下文的 `npm.cmd` 命令，不需要修改系统执行策略。
+对于比较内向、慢热或者不擅长即时表达的人来说，**“怎么开始第一句话”本身就是一种社交摩擦。**
 
-## 安装依赖
+另一方面，现有电子名片产品大多围绕公司、职位、电话、销售线索和 CRM 设计，对年轻用户的个人表达、兴趣人格和线下破冰支持较弱。
 
-```powershell
-npm.cmd ci
+因此我希望把：
+
+> **临场组织语言介绍自己**
+
+变成：
+
+> **提前整理好自己想被别人看到的一面，在合适的时候通过丝滑的方式把它递出去。**
+
+先表达，再互动，让最难的第一句话变得轻松一点。
+
+---
+
+## 产品有什么不同？
+
+「碰卡」没有沿着“电子名片 + 联系方式”或“陌生人匹配”的方向设计，而是把 **个人表达、碰一碰、视觉设计和现实社交**作为核心。
+
+### 01｜设计本身就是功能
+
+名牌不仅要承载信息，也要漂亮到用户愿意主动递出、分享，甚至发布到自己的社交媒体。
+
+目前已经完成：
+
+- **Apple Minimal**：极简、留白、突出个人主体（持续优化中）
+- **Magazine**：杂志人物特写式信息呈现（持续优化中）
+
+### 02｜降低社交压力
+
+浏览名牌不等于关注，也不等于建立关系。
+
+公开浏览不会强制登录，也不会展示访客记录或自动暴露联系方式。
+
+### 03｜现实社交优先
+
+产品不计划做：
+
+- 附近的人
+- 滑动匹配
+- 陌生人推荐流
+- 粉丝数和人气榜
+- 公开社交关系链
+
+而是围绕真实场景中的认识过程设计：
+
+```text
+手机/其他NFC碰一碰
+    ↓
+递出名牌
+    ↓
+对方浏览
+    ↓
+认识请求
+    ↓
+接受并回赠名牌
+    ↓
+形成「相遇」
+    ↓
+双方愿意时再交换联系方式
 ```
 
-锁文件必须保留在仓库中。不要删除锁文件后声称使用了相同的依赖基线。
+## 产品设计思路
 
-## 本地配置
+我把产品原则归纳为四点：
 
-1. 复制 `project.private.config.json.example` 为 `project.private.config.json`。
-2. 使用微信开发者工具打开仓库根目录。
-3. 确认项目 AppID 为 `wxc061682046272324`。
-4. 不要提交生成的 `project.private.config.json`。
+**表达优先 / 现实社交优先 / 用户控制 / 低压力互动**
 
-仓库提供 `local`、`development`、`staging`、`production` 四环境。当前开发构建选择
-`development`，显式配置 EnvId `cloud1-d1gh2crj26320f882`；`local`、`staging` 和
-`production` 继续关闭云能力。AppID 和 EnvId 是客户端可见的环境标识，不是授权凭证。
-OpenID、AppSecret、身份 HMAC 密钥和其他凭据不得进入仓库或小程序包。配置见：
+一个人在不同场景中可能希望展示不同的自己，因此用户未来可以拥有多张名牌，例如：
 
-- `miniprogram/config/env.ts`
-- `miniprogram/config/env.example.ts`
+- 朋友认识的我
+- 摄影活动里的我
+- 工作场景里的我
+- 最近正在发生变化的我
 
-App 启动只执行 `wx.cloud.init`，身份状态保持 `ANONYMOUS`，不会调用三个身份云函数。
-只有点击 foundation 页的手动身份探针才发起身份请求。初始化或调用失败会返回安全失败，
-不会白屏或伪装成真实云能力。
+在开发过程中，我也主动重新收敛了 MVP。
 
-development 三个现有函数实际运行 `Nodejs16.13`，这是 ADR-032 限定的 development
-平台偏差；不得复制到 staging/production。新建 staging/production 函数必须显式选择
-`Nodejs20.19` 或届时经项目批准的更新 LTS Runtime。development 当前政策版本为
-`TERMS_VERSION=v1`、`PRIVACY_VERSION=v1`。
+第一阶段不追求模板和功能数量，而是优先验证：
 
-## 微信开发者工具导入
+> **用户是否愿意制作、发布并真正分享一张名牌？**
 
-1. 打开微信开发者工具并选择“导入项目”。
-2. 项目目录选择本仓库根目录。
-3. 确认小程序目录识别为 `miniprogram/`。
-4. 确认开发者工具已关联 development 环境。
-5. 编译后应看到“选择你的名牌”Gallery。
-6. Gallery 应只展示 Apple Minimal / Magazine，并且每张卡只有“查看完整预览”产品操作；
-   Foundation 工程页仍可通过 `pages/foundation/index` 直接打开。
+因此当前核心链路是：
 
-M2.1-B1 已在 WeChat DevTools Stable `v2.01.2510290`、基础库 `3.17.0` 完成真实本地
-compile、`CardRenderer` mount、六 shell dispatch、24 fixture/scenario matrix、
-ready/failure 双向切换、stale-state cleanup 和 Lab 本地切换验证。该验证不包含 Preview、
-Upload、正式六模板视觉或产品路由。
+**Gallery → Preview → Select → Editor → Draft → Publish → Share → Anonymous View**
 
-FT-01 已在 WeChat DevTools `v2.02.2607171`、基础库 `3.17.0` 完成冷启动、Gallery、
-Apple/Magazine Preview / Select、非法/延期/版本路由、滚动、safe-area 与 Foundation 直达
-回归验证；用户已接受当前 First MVP 视觉。精确 iPhone / Android device matrix 继续属于
-Launch Hardening，不再阻塞 FT-01 Independent Review。
+---
 
-`project.config.json`、原生 TypeScript、页面注册与两套根目录识别已在 M1.1/M1.2-A
-微信开发者工具人工验收中通过。若开发者工具后续调整或移除字段，应重新验证并记录到
-`docs/DECISIONS.md`，不得凭经验扩展配置。
+## 怎么实现？
 
-## 本地验证
+### 技术栈
 
-```powershell
-npm.cmd run shared:check
-npm.cmd run format:check
-npm.cmd run lint
-npm.cmd run typecheck
-npm.cmd test
-npm.cmd run cloudfunctions:check
-npm.cmd run cloudfunctions:check:isolated
-```
+**Frontend**
 
-这些命令必须真实执行。命令存在不代表检查通过。当前 FT-01 Review 基线为 36 个测试文件、
-294 项测试。
-`cloudfunctions:check:isolated` 会在系统临时目录按各函数锁文件安装生产依赖、检查完整
-依赖树并加载入口；它不连接或部署 CloudBase。
+WeChat Mini Program / TypeScript / WXML / WXSS
 
-## 共享代码与微信编译边界
+**Backend**
 
-仓库根目录 `shared/` 是共享 TypeScript 契约和工具的唯一源。微信开发者工具不能编译
-`miniprogramRoot` 之外的相对导入，因此小程序运行时使用生成的
-`miniprogram/shared/` 镜像；云函数本地代码使用生成的
-`cloudfunctions/shared/contracts/` 镜像。服务端身份、HMAC 和仓储实现不进入根共享源。
+Tencent CloudBase / Cloud Functions / Document Database
 
-修改根目录 `shared/` 后执行：
+**Engineering**
 
-```powershell
-npm.cmd run shared:sync
-```
+Vitest / ESLint / Prettier / TypeScript
 
-`format:check`、`lint` 和 `typecheck` 会先执行 `shared:check`。镜像缺失或过期时检查会
-失败，不得直接编辑两个生成镜像中的 `.ts` 文件。
+---
 
-## 目录说明
+### 01｜统一模板渲染系统
 
-- `miniprogram/`：微信原生小程序代码、工程初始化页、本地模板领域/registry，以及
-  M2.1-B1 CardRenderer Foundation。
-- `miniprogram/shared/`：供微信编译器使用的生成镜像，不是第二份源代码。
-- `cloudfunctions/`：身份领域层、微信可信身份、CloudBase 事务适配和三个可独立构建的云函数入口。
-- `shared/`：公共定义和工具的唯一源。
-- `tools/`：共享契约同步、云函数构建与部署边界检查脚本。
-- `tests/`：M1 工程/身份/运行时边界测试，以及 M2.1-A/B1 模板领域、renderer preparation、
-  capability、binding、fixture/Lab 和架构 invariant 测试。
-- `docs/`：产品、架构、测试和任务基线。
+产品没有为 Gallery、Preview、Editor 分别写不同的名牌页面，而是建立了一套统一的渲染链路：
 
-## 换一台 Windows 电脑继续
+**RenderModel → CardRenderer → Template Renderer**
 
-1. 安装 Git、Node.js 24.x、npm 11.x 和微信开发者工具。
-2. 克隆私有仓库并进入项目根目录。
-3. 执行 `npm.cmd ci`。
-4. 复制 `project.private.config.json.example`。
-5. 运行全部四项质量命令。
-6. 用微信开发者工具导入仓库根目录并编译工程初始化页。
-7. 确认 Git 状态中没有 `project.private.config.json`、OpenID、AppSecret、HMAC 密钥或其他凭据。
+Gallery、完整预览以及未来 Editor 都可以复用同一套真实 Renderer，避免出现“预览长一个样，最终页面又是另一个样”的问题。
 
-## 常见问题
+底层目前保留 6 套模板架构，但首发 MVP 只开放：
 
-### 为什么手动身份探针仍可能返回 UNAVAILABLE？
+- **Apple Minimal**
+- **Magazine**
 
-真实 development 身份主链路已经通过验收。`local` 环境会按设计保持云能力关闭；在
-development 中，环境未关联、函数配置缺失、调用权限、网络或平台失败仍会安全映射为
-不可用，不会把失败伪装成已认证。按运行手册核对环境和三个函数，不要在客户端加入
-OpenID、Secret 或绕过权限的兜底。
+通过独立 Launch Catalog 控制首发范围，既减少 MVP 复杂度，也保留未来增加模板的能力。
 
-### 为什么页面不是正式首页？
+---
 
-它仅用于证明原生小程序骨架、组件和配置可以工作。正式产品页面属于后续 Sprint。
+### 02｜Draft 与展示模型分离
 
-### 为什么 WXML/WXSS 没有由 Prettier 格式化？
+用户正在编辑时，昵称、介绍、图片等内容可能还是空的，因此采用：
 
-当前 Prettier 基线只检查其原生支持的文件。WXML/WXSS 由工程约定和微信开发者工具编译验证，未引入额外格式化插件。
+**CardDraftContent → Preview Projection → RenderModel → CardRenderer**
 
-### 可以在配置文件中加入真实 AppSecret 吗？
+用户真实保存的数据与最终展示模型分离。
 
-不可以。AppSecret、AI Key 和其他服务端密钥只能放在受控云端环境变量中，绝不能进入客户端或 Git。
+例如 Preview 中出现的默认名字、占位图片只用于展示，**不会写入用户真实 Draft**。
 
-完整人工部署顺序见
-[`docs/runbooks/CLOUDBASE_DEVELOPMENT.md`](docs/runbooks/CLOUDBASE_DEVELOPMENT.md)。
+---
+
+### 03｜Card / Draft 云端持久化
+
+目前已经建立真实 CloudBase 数据链路：
+
+**Mini Program → Cloud Function → Card Service → CloudBase Database**
+
+目前已经实现：
+
+- 用户可以拥有多张 Card
+- Card 与模板绑定
+- Draft 云端持久化
+- 服务端 Ownership 校验
+- 客户端不能直接写 `cards` 数据库
+- 服务端重新验证模板和 Draft 数据
+
+---
+
+### 04｜考虑真实网络环境下的数据安全
+
+创建 Card 和保存草稿并不只依赖“按钮防重复”。
+
+目前已经设计并实现：
+
+**Idempotent Create**
+
+同一次创建请求即使因为网络问题重复发送，也不会生成两张 Card。
+
+**Revision Control**
+
+草稿使用 Revision 控制版本，旧版本不会静默覆盖云端的新内容。
+
+**Local Draft Recovery**
+
+本地保存最新 Draft、Cloud Revision 和 Pending Mutation，为弱网、退出应用和请求结果未知等情况提供恢复基础。
+
+---
+
+### 05｜匿名浏览与身份边界
+
+Cold Start、Gallery 和 Preview 阶段保持匿名。
+
+只有用户明确点击：
+
+> **使用这个模板**
+
+才进入真实 Owner Flow：
+
+**Template Select → Local Create Intent → Identity → Policy Check → Card Create**
+
+用户的 Owner 身份来自服务端可信微信上下文，而不是由客户端传入 `ownerId` 或 OpenID。
+
+---
+
+## 当前进度
+
+目前已经完成：
+
+- ✅ Template Registry / CardRenderer
+- ✅ Apple Minimal
+- ✅ Magazine
+- ✅ Template Gallery
+- ✅ Full Preview / Select
+- ✅ Anonymous Browse
+- ✅ CloudBase Identity Foundation
+- ✅ Card / Draft Data Model
+- ✅ `cardCreate`
+- ✅ `cardGetMine`
+- ✅ `cardUpdateDraft`
+- ✅ Server-side Ownership Validation
+- ✅ 创建幂等与 Revision 机制
+- ✅ 本地 Draft Recovery 基础
+- ✅ Development 环境第一张真实 Card 创建
+
+当前正在继续完成：
+
+**Draft Save → Relaunch Recovery → Full Editor → Publish → Share → Anonymous Public Card**
+
+目前项目已经不是单纯 UI Demo，而是开始跑通真实的：
+
+> **Mini Program → Cloud Function → CloudBase Database**
+
+产品链路。
+
+---
+
+## Roadmap
+
+### MVP / Alpha
+
+下一阶段将完成：
+
+- 正式 Editor
+- 草稿自动保存与恢复
+- 图片上传
+- 发布与内容审核
+- 匿名公开名牌
+- 微信分享 Deep Link
+
+形成完整闭环：
+
+**制作 → 发布 → 分享 → 别人打开**
+
+### Social Loop
+
+之后继续实现：
+
+**认识请求 → 名牌回赠 → 相遇 → 相遇册 → 共同兴趣 → 联系方式交换**
+
+### Future
+
+长期计划包括：
+
+- 更多视觉模板
+- 可扩展 Multi-page Card
+- AI 表达助手
+- 社交媒体视觉图片生成
+- NFC 名牌
+- NFC 贴片 / 电子吧唧 / 工卡等实体载体
+
+最终希望实现：
+
+> **碰一下，就能认识我。**
+
+---
+
+## AI-assisted Development
+
+这个项目也是我对 **AI Coding / Agentic Development** 的一次长期实践。
+
+我负责：
+
+- 产品定义与 PRD
+- 用户流程与 MVP Scope
+- 视觉方向
+- 架构设计
+- Acceptance Criteria
+- Runtime 验收
+- 产品取舍
+
+AI Agent 参与：
+
+**Planning → Implementation → Automated Tests → Independent Review → Runtime Validation**
+
+我希望验证的是：
+
+> **在产品目标、架构边界和验收标准明确以后，人能不能管理 AI Agent 持续开发一个真正可运行、有实际应用场景的 Vibe Coding 产品。**
